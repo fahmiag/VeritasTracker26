@@ -1,6 +1,10 @@
 #pragma once
 
+#include "managers/DisplayManager.h"
+#include "managers/ButtonManager.h"
+
 //App coordinates modules but doesn't implement hardware details.
+//App never talks directly to hardware.
 
 class App
 {
@@ -10,6 +14,12 @@ public:
     void Run();
 
 private:
+
+    DisplayManager display_;
+    ButtonManager buttons_;
+
+    uint32_t lastDisplayUpdate_ = 0;
+    uint32_t lastButtonUpdate_ = 0;
 
     // GPSManager gps;
     // HeadingManager heading;
