@@ -7,18 +7,13 @@ void App::Begin()
 {
     Serial.begin(115200);
 
-    if (!display_.Begin())
-    {
-        Serial.println("OLED initialization FAILED!");
-    }
-    else
-    {
-        Serial.println("OLED initialization OK");
-    }
+    display_.Begin();
 
     buttons_.Begin();
 
     display_.ShowMainScreen();
+
+    Serial.println("+++ START APP +++");
 }
 
 void App::Run()
@@ -32,24 +27,29 @@ void App::Run()
 
         buttons_.Update();
 
+        //TODO: Comment/remove all display_.ShowMessage() in this function
         if (buttons_.WasPressed(Button::UP))
         {
             display_.ShowMessage("UP pressed");
+            Serial.println("UP");
         }
 
         if (buttons_.WasPressed(Button::DOWN))
         {
             display_.ShowMessage("DOWN pressed");
+            Serial.println("DOWN");
         }
 
         if (buttons_.WasPressed(Button::SELECT))
         {
             display_.ShowMessage("SELECT pressed");
+            Serial.println("SELECT");
         }
 
         if (buttons_.WasPressed(Button::BACK))
         {
             display_.ShowMessage("BACK pressed");
+            Serial.println("BACK");
         }
     }
 

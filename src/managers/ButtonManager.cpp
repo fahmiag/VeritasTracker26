@@ -7,7 +7,7 @@ bool ButtonManager::Begin()
 
 void ButtonManager::Update()
 {
-    lastButton_ = buttons_.Read();
+    lastButton_ = buttons_.Update();
 }
 
 Button ButtonManager::GetLastButton()

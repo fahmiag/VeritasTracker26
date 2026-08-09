@@ -1,67 +1,144 @@
 #include "Buttons.h"
 
 #include "../config/PinMap.h"
+#include "../config/Config.h"
 
 bool Buttons::Begin()
 {
-    pinMode(PinMap::BUTTON_UP, INPUT_PULLUP);
-    pinMode(PinMap::BUTTON_DOWN, INPUT_PULLUP);
-    pinMode(PinMap::BUTTON_SELECT, INPUT_PULLUP);
-    pinMode(PinMap::BUTTON_BACK, INPUT_PULLUP);
+    buttons_[0] = 
+    { 
+        PinMap::BUTTON_UP, 
+        Button::UP, 
+        HIGH, 
+        HIGH, 
+        0 
+    }; 
+
+    buttons_[1] = 
+    { 
+        PinMap::BUTTON_DOWN, 
+        Button::DOWN, 
+        HIGH, 
+        HIGH, 
+        0 
+    }; 
+    
+    buttons_[2] = 
+    { 
+        PinMap::BUTTON_SELECT, 
+        Button::SELECT, 
+        HIGH, 
+        HIGH, 0 
+    }; 
+    buttons_[3] = 
+    { 
+        PinMap::BUTTON_BACK, 
+        Button::BACK, 
+        HIGH, 
+        HIGH, 
+        0 
+    }; 
+
+    for (auto& button : buttons_) 
+    { 
+        pinMode(button.pin, INPUT_PULLUP); 
+        button.lastReading = digitalRead(button.pin); 
+        button.stableState = button.lastReading; 
+        button.lastChangeTime = millis(); 
+    }
+
+    // pinMode(PinMap::BUTTON_UP, INPUT_PULLUP);
+    // pinMode(PinMap::BUTTON_DOWN, INPUT_PULLUP);
+    // pinMode(PinMap::BUTTON_SELECT, INPUT_PULLUP);
+    // pinMode(PinMap::BUTTON_BACK, INPUT_PULLUP);
 
     return true;
 }
 
+Button Buttons::Update() 
+{ 
+    uint32_t now = millis(); 
+    
+    for (auto& button : buttons_) //check all button
+    { 
+        bool reading = digitalRead(button.pin); // Physical signal changed 
+        if (reading != button.lastReading) 
+        { 
+            button.lastChangeTime = now; 
+            button.lastReading = reading; 
+        } // Signal has remained stable long enough 
+        
+        if ((now - button.lastChangeTime) >= Config::BUTTON_DEBOUNCE_MS) 
+        { 
+            if (reading != button.stableState) 
+            { 
+                button.stableState = reading; 
+                
+                // INPUT_PULLUP: 
+                // LOW = button pressed 
+                if (button.stableState == LOW) 
+                { 
+                    return button.button; 
+                } 
+            } 
+        } 
+    } 
+
+    return Button::NONE; 
+}
+
+
+
 //This gives one event when a button is pressed, 
 //rather than continuously reporting the button while it is held.
-Button Buttons::Read()
-{
-    if (digitalRead(PinMap::BUTTON_UP) == LOW && lastStateUp_ == HIGH)
-    {
-        lastStateUp_ = LOW;
-        Serial.println("Button UP");
-        return Button::UP;
-    }
-    if (digitalRead(PinMap::BUTTON_UP) == HIGH)
-    {
-        lastStateUp_ = HIGH;
-    }
+// Button Buttons::Read()
+// {
+//     if (digitalRead(PinMap::BUTTON_UP) == LOW && lastStateUp_ == HIGH)
+//     {
+//         lastStateUp_ = LOW;
+//         Serial.println("Button UP");
+//         return Button::UP;
+//     }
+//     if (digitalRead(PinMap::BUTTON_UP) == HIGH)
+//     {
+//         lastStateUp_ = HIGH;
+//     }
 
 
-    if (digitalRead(PinMap::BUTTON_DOWN) == LOW && lastStateDown_ == HIGH)
-    {
-        lastStateDown_ = LOW;
-        Serial.println("Button DOWN");
-        return Button::DOWN;
-    }
-    if (digitalRead(PinMap::BUTTON_DOWN) == HIGH)
-    {
-        lastStateDown_ = HIGH;
-    }
+//     if (digitalRead(PinMap::BUTTON_DOWN) == LOW && lastStateDown_ == HIGH)
+//     {
+//         lastStateDown_ = LOW;
+//         Serial.println("Button DOWN");
+//         return Button::DOWN;
+//     }
+//     if (digitalRead(PinMap::BUTTON_DOWN) == HIGH)
+//     {
+//         lastStateDown_ = HIGH;
+//     }
 
 
-    if (digitalRead(PinMap::BUTTON_SELECT) == LOW && lastStateSelect_ == HIGH)
-    {
-        lastStateSelect_ = LOW;
-        Serial.println("Button SELECT");
-        return Button::SELECT;
-    }
-    if (digitalRead(PinMap::BUTTON_SELECT) == HIGH)
-    {
-        lastStateSelect_ = HIGH;
-    }
+//     if (digitalRead(PinMap::BUTTON_SELECT) == LOW && lastStateSelect_ == HIGH)
+//     {
+//         lastStateSelect_ = LOW;
+//         Serial.println("Button SELECT");
+//         return Button::SELECT;
+//     }
+//     if (digitalRead(PinMap::BUTTON_SELECT) == HIGH)
+//     {
+//         lastStateSelect_ = HIGH;
+//     }
 
 
-    if (digitalRead(PinMap::BUTTON_BACK) == LOW && lastStateBack_ == HIGH)
-    {
-        lastStateBack_ = LOW;
-        Serial.println("Button BACK");
-        return Button::BACK;
-    }
-    if (digitalRead(PinMap::BUTTON_BACK) == HIGH)
-    {
-        lastStateBack_ = HIGH;
-    }
+//     if (digitalRead(PinMap::BUTTON_BACK) == LOW && lastStateBack_ == HIGH)
+//     {
+//         lastStateBack_ = LOW;
+//         Serial.println("Button BACK");
+//         return Button::BACK;
+//     }
+//     if (digitalRead(PinMap::BUTTON_BACK) == HIGH)
+//     {
+//         lastStateBack_ = HIGH;
+//     }
 
-    return Button::NONE;
-}
+//     return Button::NONE;
+// }
