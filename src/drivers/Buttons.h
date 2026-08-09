@@ -11,13 +11,30 @@ enum class Button
     BACK
 };
 
+enum class ButtonEvent 
+{ 
+    NONE, 
+
+    UP_SHORT, 
+    UP_LONG, 
+
+    DOWN_SHORT, 
+    DOWN_LONG, 
+
+    SELECT_SHORT, 
+    SELECT_LONG, 
+
+    BACK_SHORT, 
+    BACK_LONG 
+};
+
 class Buttons
 {
 public:
 
     bool Begin();
 
-    Button Update();
+    ButtonEvent Update();
     //Button Read();
 
 private:
@@ -28,14 +45,16 @@ private:
         bool stableState; 
         bool lastReading; 
         uint32_t lastChangeTime; 
+        uint32_t pressStartTime; 
+        bool longPressReported;
     }; 
     
     ButtonState buttons_[4];
 
-    // Button ReadButton(uint8_t pin, Button button);
+    ButtonEvent MakeEvent(
+        Button button, 
+        bool longPress 
+    );
 
-    // uint8_t lastStateUp_ = HIGH;
-    // uint8_t lastStateDown_ = HIGH;
-    // uint8_t lastStateSelect_ = HIGH;
-    // uint8_t lastStateBack_ = HIGH;
+
 };

@@ -18,6 +18,8 @@ void App::Begin()
 
 void App::Run()
 {
+    static uint32_t lastButtonScan = 0;
+
     uint32_t now = millis();
 
     // Button processing
@@ -27,29 +29,45 @@ void App::Run()
 
         buttons_.Update();
 
-        //TODO: Comment/remove all display_.ShowMessage() in this function
-        if (buttons_.WasPressed(Button::UP))
-        {
-            display_.ShowMessage("UP pressed");
-            Serial.println("UP");
-        }
+        ButtonEvent event = buttons_.GetEvent();
 
-        if (buttons_.WasPressed(Button::DOWN))
-        {
-            display_.ShowMessage("DOWN pressed");
-            Serial.println("DOWN");
-        }
 
-        if (buttons_.WasPressed(Button::SELECT))
+        switch (event)
         {
-            display_.ShowMessage("SELECT pressed");
-            Serial.println("SELECT");
-        }
+            case ButtonEvent::UP_SHORT:
+                Serial.println("UP SHORT");
+                break;
 
-        if (buttons_.WasPressed(Button::BACK))
-        {
-            display_.ShowMessage("BACK pressed");
-            Serial.println("BACK");
+            case ButtonEvent::UP_LONG:
+                Serial.println("UP LONG");
+                break;
+
+            case ButtonEvent::DOWN_SHORT:
+                Serial.println("DOWN SHORT");
+                break;
+
+            case ButtonEvent::DOWN_LONG:
+                Serial.println("DOWN LONG");
+                break;
+
+            case ButtonEvent::SELECT_SHORT:
+                Serial.println("SELECT SHORT");
+                break;
+
+            case ButtonEvent::SELECT_LONG:
+                Serial.println("SELECT LONG");
+                break;
+
+            case ButtonEvent::BACK_SHORT:
+                Serial.println("BACK SHORT");
+                break;
+
+            case ButtonEvent::BACK_LONG:
+                Serial.println("BACK LONG");
+                break;
+
+            case ButtonEvent::NONE:
+                break;
         }
     }
 

@@ -11,7 +11,9 @@ bool Buttons::Begin()
         Button::UP, 
         HIGH, 
         HIGH, 
-        0 
+        0,
+        0,
+        false
     }; 
 
     buttons_[1] = 
@@ -20,7 +22,9 @@ bool Buttons::Begin()
         Button::DOWN, 
         HIGH, 
         HIGH, 
-        0 
+        0,
+        0,
+        false 
     }; 
     
     buttons_[2] = 
@@ -28,7 +32,10 @@ bool Buttons::Begin()
         PinMap::BUTTON_SELECT, 
         Button::SELECT, 
         HIGH, 
-        HIGH, 0 
+        HIGH, 
+        0,
+        0,
+        false
     }; 
     buttons_[3] = 
     { 
@@ -36,7 +43,9 @@ bool Buttons::Begin()
         Button::BACK, 
         HIGH, 
         HIGH, 
-        0 
+        0,
+        0,
+        false
     }; 
 
     for (auto& button : buttons_) 
@@ -45,48 +54,131 @@ bool Buttons::Begin()
         button.lastReading = digitalRead(button.pin); 
         button.stableState = button.lastReading; 
         button.lastChangeTime = millis(); 
+        button.pressStartTime = 0; 
+        button.longPressReported = false;
     }
 
-    // pinMode(PinMap::BUTTON_UP, INPUT_PULLUP);
-    // pinMode(PinMap::BUTTON_DOWN, INPUT_PULLUP);
-    // pinMode(PinMap::BUTTON_SELECT, INPUT_PULLUP);
-    // pinMode(PinMap::BUTTON_BACK, INPUT_PULLUP);
 
     return true;
 }
 
-Button Buttons::Update() 
+ButtonEvent Buttons::Update() 
 { 
     uint32_t now = millis(); 
     
     for (auto& button : buttons_) //check all button
     { 
-        bool reading = digitalRead(button.pin); // Physical signal changed 
+        bool reading = digitalRead(button.pin); 
+        
+        // ------------------------------------------------- 
+        // Raw signal changed 
+        // -------------------------------------------------
+
         if (reading != button.lastReading) 
         { 
             button.lastChangeTime = now; 
             button.lastReading = reading; 
-        } // Signal has remained stable long enough 
-        
-        if ((now - button.lastChangeTime) >= Config::BUTTON_DEBOUNCE_MS) 
-        { 
-            if (reading != button.stableState) 
-            { 
-                button.stableState = reading; 
-                
-                // INPUT_PULLUP: 
-                // LOW = button pressed 
-                if (button.stableState == LOW) 
-                { 
-                    return button.button; 
-                } 
-            } 
         } 
+
+        // ------------------------------------------------- 
+        // Wait for debounce 
+        // -------------------------------------------------
+
+        
+        if ((now - button.lastChangeTime) < 
+            Config::BUTTON_DEBOUNCE_MS) 
+        {
+            continue;
+        }
+        
+        // ------------------------------------------------- 
+        // Stable state changed 
+        // -------------------------------------------------       
+        if (reading != button.stableState) 
+        { 
+            button.stableState = reading; 
+
+            // --------------------------------------------- 
+            // BUTTON PRESSED 
+            // ---------------------------------------------
+            
+            // INPUT_PULLUP: 
+            // LOW = button pressed 
+            if (button.stableState == LOW) 
+            { 
+                button.pressStartTime = now; 
+                button.longPressReported = false;
+            } 
+
+            // --------------------------------------------- 
+            // BUTTON RELEASED 
+            // --------------------------------------------- 
+            else 
+            { 
+                uint32_t pressDuration = now - button.pressStartTime; 
+
+                // Short press 
+                if (!button.longPressReported) 
+                { 
+                    return MakeEvent( 
+                        button.button, 
+                        false 
+                    ); 
+                } 
+            }
+
+        }    
+
+        // ------------------------------------------------- 
+        // Check for long press 
+        // ------------------------------------------------- 
+        if (button.stableState == LOW && !button.longPressReported) 
+        { 
+            uint32_t pressDuration = now - button.pressStartTime; 
+
+            if (pressDuration >= Config::BUTTON_LONG_PRESS_MS) 
+            { 
+                button.longPressReported = true; 
+
+                return MakeEvent( 
+                    button.button, 
+                    true 
+                );
+            } 
+        }
     } 
 
-    return Button::NONE; 
+    return ButtonEvent::NONE; 
 }
 
+ButtonEvent Buttons::MakeEvent( Button button, bool longPress) 
+{ 
+    switch (button) 
+    { 
+    case Button::UP: 
+        return longPress 
+            ? ButtonEvent::UP_LONG 
+            : ButtonEvent::UP_SHORT; 
+            
+    case Button::DOWN: 
+        return longPress 
+        ? ButtonEvent::DOWN_LONG 
+        : ButtonEvent::DOWN_SHORT; 
+        
+    case Button::SELECT: 
+        return longPress 
+        ? ButtonEvent::SELECT_LONG 
+        : ButtonEvent::SELECT_SHORT; 
+
+    case Button::BACK: 
+        return longPress 
+        ? ButtonEvent::BACK_LONG 
+        : ButtonEvent::BACK_SHORT; 
+
+    default: 
+        return ButtonEvent::NONE; 
+    } 
+}
 
 
 //This gives one event when a button is pressed, 

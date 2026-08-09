@@ -10,13 +10,16 @@ public:
 
     void Update();
 
-    Button GetLastButton();
+   // Button GetLastButton();
+   // bool WasPressed(Button button);
 
-    bool WasPressed(Button button);
+    ButtonEvent GetEvent();
+    bool WasEvent(ButtonEvent button);
 
 private:
 
     Buttons buttons_;
 
     Button lastButton_ = Button::NONE;
+    ButtonEvent lastEvent_ = ButtonEvent::NONE; 
 };

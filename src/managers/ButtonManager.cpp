@@ -1,21 +1,27 @@
+
 #include "ButtonManager.h"
+
 
 bool ButtonManager::Begin()
 {
     return buttons_.Begin();
 }
 
+
 void ButtonManager::Update()
 {
-    lastButton_ = buttons_.Update();
+    lastEvent_ = buttons_.Update();
 }
 
-Button ButtonManager::GetLastButton()
+
+ButtonEvent ButtonManager::GetEvent()
 {
-    return lastButton_;
+    return lastEvent_;
 }
 
-bool ButtonManager::WasPressed(Button button)
+
+bool ButtonManager::WasEvent(ButtonEvent event)
 {
-    return lastButton_ == button;
+    return lastEvent_ == event;
 }
+
