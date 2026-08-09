@@ -5,8 +5,17 @@
 
 void App::Begin()
 {
- 
-    display_.Begin();
+    Serial.begin(115200);
+
+    if (!display_.Begin())
+    {
+        Serial.println("OLED initialization FAILED!");
+    }
+    else
+    {
+        Serial.println("OLED initialization OK");
+    }
+
     buttons_.Begin();
 
     display_.ShowMainScreen();
@@ -46,12 +55,12 @@ void App::Run()
 
 
     // Display processing
-    if (now - lastDisplayUpdate_ >= Config::DISPLAY_UPDATE_MS)
-    {
-        lastDisplayUpdate_ = now;
+    // if (now - lastDisplayUpdate_ >= Config::DISPLAY_UPDATE_MS)
+    // {
+    //     lastDisplayUpdate_ = now;
 
-        display_.Update();
-    }
+    //     display_.Update();
+    // }
     
 }
 

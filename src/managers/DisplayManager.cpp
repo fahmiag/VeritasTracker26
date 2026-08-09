@@ -14,17 +14,17 @@ void DisplayManager::ShowMainScreen()
 {
     oled_.Clear();
 
-    oled_.DrawText(0, 10, "GPS TRACKER");
+    oled_.DrawText(0, 0, "GPS TRACKER");
 
-    oled_.DrawLine(0, 13, 127, 13);
+    oled_.DrawLine(0, 10, 127, 10);
 
-    oled_.DrawText(0, 28, "GPS: Searching");
+    oled_.DrawText(0, 15, "GPS: Searching");
 
-    oled_.DrawText(0, 40, "HDG: --.- deg");
+    oled_.DrawText(0, 26, "HDG: --.- deg");
 
-    oled_.DrawText(0, 52, "SAT: Ready");
+    oled_.DrawText(0, 37, "SAT: Ready");
 
-    oled_.DrawText(0, 63, "LOG: ON");
+    oled_.DrawText(0, 48, "LOG: ON");
 
     oled_.Update();
 }

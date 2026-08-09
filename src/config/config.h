@@ -6,7 +6,7 @@
 
 namespace Config
 {
-    constexpr uint32_t DISPLAY_UPDATE_MS = 100;
+    //constexpr uint32_t DISPLAY_UPDATE_MS = 1000;
 
     constexpr uint32_t BUTTON_SCAN_MS = 20;
     constexpr uint32_t BUTTON_DEBOUNCE_MS = 50;

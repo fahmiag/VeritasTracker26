@@ -19,6 +19,7 @@ Button Buttons::Read()
     if (digitalRead(PinMap::BUTTON_UP) == LOW && lastStateUp_ == HIGH)
     {
         lastStateUp_ = LOW;
+        Serial.println("Button UP");
         return Button::UP;
     }
     if (digitalRead(PinMap::BUTTON_UP) == HIGH)
@@ -30,6 +31,7 @@ Button Buttons::Read()
     if (digitalRead(PinMap::BUTTON_DOWN) == LOW && lastStateDown_ == HIGH)
     {
         lastStateDown_ = LOW;
+        Serial.println("Button DOWN");
         return Button::DOWN;
     }
     if (digitalRead(PinMap::BUTTON_DOWN) == HIGH)
@@ -41,6 +43,7 @@ Button Buttons::Read()
     if (digitalRead(PinMap::BUTTON_SELECT) == LOW && lastStateSelect_ == HIGH)
     {
         lastStateSelect_ = LOW;
+        Serial.println("Button SELECT");
         return Button::SELECT;
     }
     if (digitalRead(PinMap::BUTTON_SELECT) == HIGH)
@@ -52,6 +55,7 @@ Button Buttons::Read()
     if (digitalRead(PinMap::BUTTON_BACK) == LOW && lastStateBack_ == HIGH)
     {
         lastStateBack_ = LOW;
+        Serial.println("Button BACK");
         return Button::BACK;
     }
     if (digitalRead(PinMap::BUTTON_BACK) == HIGH)

@@ -1,8 +1,9 @@
 #pragma once
 
 #include <Arduino.h>
-#include <U8g2lib.h>  //suggest by chatGPT
-//#include <Adafruit_SSD1306.h> //previously use this
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 class OLED
 {
@@ -25,5 +26,5 @@ public:
 
 private:
 
-    U8G2_SSD1306_128X64_NONAME_F_HW_I2C display_;
+    Adafruit_SSD1306 display_;
 };

@@ -1,6 +1,7 @@
 
-//#include <Arduino.h>
 #include "App.h"
+
+Adafruit_SSD1306 display(128, 64, &Wire, -1);
 
 App app;
 
