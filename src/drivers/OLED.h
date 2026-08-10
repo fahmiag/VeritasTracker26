@@ -12,10 +12,11 @@ public:
     OLED();
 
     bool Begin();
-
     void Clear();
-
     void Update();
+
+    void DisplayOn();
+    void DisplayOff();
 
     void DrawText(uint8_t x, uint8_t y, const char* text);
 
@@ -23,6 +24,12 @@ public:
 
     void DrawLine(uint8_t x1, uint8_t y1,
                   uint8_t x2, uint8_t y2);
+
+    void SetTextColor(uint16_t color);
+    
+    void FillRect(uint8_t x, uint8_t y,
+              uint8_t width, uint8_t height,
+              uint16_t color);
 
 private:
 

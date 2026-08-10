@@ -10,6 +10,8 @@ namespace Config
     constexpr uint32_t BUTTON_DEBOUNCE_MS = 50;
     constexpr uint32_t BUTTON_LONG_PRESS_MS = 1000;
 
+    constexpr uint32_t OLED_TIMEOUT_MS = 60000; //60000ms = 1minutes
+
     //constexpr uint32_t SATELLITE_INTERVAL_MS = 60000;
 
     //constexpr uint32_t GPS_BAUD = 115200;

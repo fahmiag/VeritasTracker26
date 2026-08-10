@@ -1,3 +1,16 @@
+/*TODO:
+ * [ ] Display timeout
+ * [ ] Add Led status blink
+ * [ ] Read GPS from RockBlock
+ * [ ] Pack Data
+ * [ ] Send data over-the-air
+ * [ ] Read Heading from Furuno
+ * [ ] Read GPS from Furuno
+ * 
+ * 
+*/
+
+
 #include "App.h"
 #include "config/Config.h"
 #include <Arduino.h>
@@ -33,63 +46,6 @@ void App::Run()
         display_.Update(event);
     }
 
-    // Button processing
-    // if (now - lastButtonUpdate_ >= Config::BUTTON_SCAN_MS)
-    // {
-    //     lastButtonUpdate_ = now;
-
-    //     buttons_.Update();
-
-    //     ButtonEvent event = buttons_.GetEvent();
-
-
-    //     switch (event)
-    //     {
-    //         case ButtonEvent::UP_SHORT:
-    //             Serial.println("UP SHORT");
-    //             break;
-
-    //         case ButtonEvent::UP_LONG:
-    //             Serial.println("UP LONG");
-    //             break;
-
-    //         case ButtonEvent::DOWN_SHORT:
-    //             Serial.println("DOWN SHORT");
-    //             break;
-
-    //         case ButtonEvent::DOWN_LONG:
-    //             Serial.println("DOWN LONG");
-    //             break;
-
-    //         case ButtonEvent::SELECT_SHORT:
-    //             Serial.println("SELECT SHORT");
-    //             break;
-
-    //         case ButtonEvent::SELECT_LONG:
-    //             Serial.println("SELECT LONG");
-    //             break;
-
-    //         case ButtonEvent::BACK_SHORT:
-    //             Serial.println("BACK SHORT");
-    //             break;
-
-    //         case ButtonEvent::BACK_LONG:
-    //             Serial.println("BACK LONG");
-    //             break;
-
-    //         case ButtonEvent::NONE:
-    //             break;
-    //     }
-    // }
-
-
-    // Display processing
-    // if (now - lastDisplayUpdate_ >= Config::DISPLAY_UPDATE_MS)
-    // {
-    //     lastDisplayUpdate_ = now;
-
-    //     display_.Update();
-    // }
     
 }
 

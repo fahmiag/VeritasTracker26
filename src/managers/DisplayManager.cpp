@@ -1,4 +1,5 @@
 #include "DisplayManager.h"
+#include "../config/Config.h"
 
 bool DisplayManager::Begin()
 {
@@ -7,6 +8,12 @@ bool DisplayManager::Begin()
         return false;
     }
 
+    currentScreen_ = DisplayScreen::MAIN;
+    menuIndex_ = 0;
+        
+    displayActive_ = true;
+    lastActivityTime_ = millis();
+
     DrawScreen();
 
     return true;
@@ -14,10 +21,81 @@ bool DisplayManager::Begin()
 
 void DisplayManager::Update(ButtonEvent event)
 {
-    if (event != ButtonEvent::NONE)
+    // Check whether OLED should go to sleep
+    CheckDisplayTimeout();
+
+     // No button event
+    if (event == ButtonEvent::NONE)
     {
-        HandleEvent(event);
+        return;
     }
+
+    // --------------------------------------------------
+    // OLED is currently OFF
+    // --------------------------------------------------
+    if (!displayActive_)
+    {
+        if (event == ButtonEvent::BACK_SHORT ||
+            event == ButtonEvent::BACK_LONG)
+        {
+            currentScreen_ = DisplayScreen::MAIN;
+        }
+
+        WakeDisplay();
+
+        // IMPORTANT:
+        // The button event is intentionally consumed here.
+        //
+        // SELECT wakes the current page.
+        // BACK wakes the MAIN page.
+        //
+        // We do NOT pass the event to HandleEvent().
+        return;
+    }
+
+    // Display is already active
+    ResetActivityTimer();
+
+    HandleEvent(event);
+}
+
+void DisplayManager::ResetActivityTimer()
+{
+    lastActivityTime_ = millis();
+}
+
+void DisplayManager::CheckDisplayTimeout()
+{
+    if (!displayActive_)
+    {
+        return;
+    }
+
+    uint32_t now = millis();
+
+    if ((now - lastActivityTime_) >=
+        Config::OLED_TIMEOUT_MS)
+    {
+        SleepDisplay();
+    }
+}
+
+void DisplayManager::SleepDisplay()
+{
+    oled_.DisplayOff();
+
+    displayActive_ = false;
+}
+
+void DisplayManager::WakeDisplay()
+{
+    oled_.DisplayOn();
+
+    displayActive_ = true;
+
+    lastActivityTime_ = millis();
+
+    DrawScreen();
 }
 
 void DisplayManager::HandleEvent(ButtonEvent event)
@@ -223,9 +301,16 @@ void DisplayManager::DrawMenu()
         if (i == menuIndex_)
         {
             oled_.DrawText(0, y, ">");
+            oled_.FillRect(10, y-1, 128, 9, SSD1306_WHITE);
+            oled_.SetTextColor(SSD1306_BLACK);
+            oled_.DrawText(10, y, items[i]);
+            oled_.SetTextColor(SSD1306_WHITE);
+        }
+        else
+        {
+            oled_.DrawText(10, y, items[i]);
         }
 
-        oled_.DrawText(10, y, items[i]);
     }
 }
 
