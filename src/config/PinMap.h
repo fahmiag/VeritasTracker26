@@ -13,4 +13,10 @@ namespace PinMap
     constexpr uint8_t BUTTON_DOWN   = 13;
     constexpr uint8_t BUTTON_SELECT = 25;
     constexpr uint8_t BUTTON_BACK   = 26;
+
+    constexpr uint8_t BUZZER_PIN = 12; 
+    constexpr uint8_t LED_STATUS = 15;
+
+   // const int SD_CS_PIN = 4;
+   // const int MCP_CS_PIN = 5;
 }

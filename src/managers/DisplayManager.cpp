@@ -301,7 +301,7 @@ void DisplayManager::DrawMenu()
         if (i == menuIndex_)
         {
             oled_.DrawText(0, y, ">");
-            oled_.FillRect(10, y-1, 128, 9, SSD1306_WHITE);
+            oled_.FillRect(10, y-1, 120, 9, SSD1306_WHITE);
             oled_.SetTextColor(SSD1306_BLACK);
             oled_.DrawText(10, y, items[i]);
             oled_.SetTextColor(SSD1306_WHITE);
