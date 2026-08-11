@@ -1,0 +1,29 @@
+#pragma once
+
+#include <Arduino.h>
+#include <TinyGPSPlus.h>
+
+#include "../data/PositionData.h"
+
+class UBloxGNSS
+{
+public:
+
+    UBloxGNSS();
+
+    bool Begin();
+
+    void Update();
+
+    bool GetPosition(PositionData& position);
+
+private:
+
+    HardwareSerial serial_;
+
+    TinyGPSPlus gps_;
+
+    PositionData position_;
+
+    static constexpr uint32_t BAUD_RATE = 9600;
+};
