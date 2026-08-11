@@ -1,11 +1,11 @@
 #pragma once
 
-#include "managers/DisplayManager.h"
-#include "managers/ButtonManager.h"
-#include "drivers/StatusLED.h"
-#include "managers/GPSManager.h"
-#include "managers/HeadingManager.h"
-#include "drivers/SDCard.h"
+#include "../managers/DisplayManager.h"
+#include "../managers/ButtonManager.h"
+#include "../drivers/StatusLED.h"
+#include "../managers/GPSManager.h"
+#include "../managers/HeadingManager.h"
+#include "../drivers/SDCard.h"
 
 //App coordinates modules but doesn't implement hardware details.
 //App never talks directly to hardware.
