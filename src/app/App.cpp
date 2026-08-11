@@ -31,6 +31,10 @@
 #include "config/PinMap.h"
 
 //#include <avr/wdt.h> //TODO Change to ESP wdt
+App::App()
+    : sdLogger_(sdCard_)
+{
+}
 
 void App::Begin()
 {
@@ -42,6 +46,10 @@ void App::Begin()
     gpsManager_.Begin();
     sdCard_.Begin();
     //scx20_.Begin();
+    if (sdCard_.IsReady())
+    {
+        sdLogger_.Begin();
+    }
 
     statusLED_.SetMode(StatusLED::Mode::NORMAL);
 
@@ -85,7 +93,23 @@ void App::Run()
         display_.Update(event);
     }
 
-    
+    static uint32_t lastLog = 0;
+
+    if (millis() - lastLog >= 1000)
+    {
+        lastLog = millis();
+
+        PositionData position;
+        HeadingData heading;
+
+        gpsManager_.GetPosition(position);
+        headingManager_.GetHeading(heading);
+
+        sdLogger_.LogNavigation(
+            position,
+            heading
+        );
+    }
 
     static uint32_t lastGPSPrint = 0;
     if (millis() - lastGPSPrint >= 1000)

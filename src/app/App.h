@@ -6,13 +6,17 @@
 #include "../managers/GPSManager.h"
 #include "../managers/HeadingManager.h"
 #include "../drivers/SDCard.h"
+#include "../drivers/SDCard.h"
+#include "../services/SDLogger.h"
 
 //App coordinates modules but doesn't implement hardware details.
 //App never talks directly to hardware.
 
+
 class App
 {
 public:
+    App();
 
     void Begin();
     void Run();
@@ -25,7 +29,9 @@ private:
 
     UBloxGNSS ublox_;
     SCX20CAN scx20_;
+
     SDCard sdCard_;
+    SDLogger sdLogger_;
 
     GPSManager gpsManager_;
     HeadingManager headingManager_;
