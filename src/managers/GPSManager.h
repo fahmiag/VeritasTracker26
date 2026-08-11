@@ -7,6 +7,13 @@ class GPSManager
 {
 public:
 
+    enum class GPSMode
+    {
+        UBLOX_ONLY,
+        SCX20_ONLY,
+        AUTO
+    };
+
     bool Begin();
 
     void Update();
@@ -17,5 +24,7 @@ private:
 
     UBloxGNSS ublox_;
 
-    PositionData position_;
+    PositionData ubloxPosition_;
+    PositionData scx20Position_;
+    PositionData selectedPosition_;
 };

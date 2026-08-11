@@ -22,10 +22,11 @@ struct PositionData
     double course = 0.0;
 
     uint8_t satellites = 0;
-
     double hdop = 0.0;
 
     uint8_t hour = 0;
     uint8_t minute = 0;
     uint8_t second = 0;
+
+    uint32_t lastUpdate = 0;
 };

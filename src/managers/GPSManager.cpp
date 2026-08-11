@@ -11,13 +11,13 @@ void GPSManager::Update()
 {
     ublox_.Update();
 
-    ublox_.GetPosition(position_);
+    ublox_.GetPosition(ubloxPosition_);
 }
 
 
 bool GPSManager::GetPosition(PositionData& position)
 {
-    position = position_;
+    position = ubloxPosition_;
 
-    return position_.valid;
+    return ubloxPosition_.valid;
 }
