@@ -32,7 +32,9 @@
 
 //#include <avr/wdt.h> //TODO Change to ESP wdt
 App::App()
-    : sdLogger_(sdCard_)
+    :   sdLogger_(sdCard_), 
+        lastLogTime_(0)
+
 {
 }
 
@@ -40,20 +42,89 @@ void App::Begin()
 {
     Serial.begin(115200);
 
+    delay(500); 
+    Serial.println(); 
+    Serial.println("=============================="); 
+    Serial.println(" GPS Tracker Starting"); 
+    Serial.println("==============================");
+
     display_.Begin();
     buttons_.Begin();
     statusLED_.Begin();
-    gpsManager_.Begin();
-    sdCard_.Begin();
-    //scx20_.Begin();
-    if (sdCard_.IsReady())
+
+    // -------------------------------- 
+    // u-blox GNSS 
+    // --------------------------------
+
+    if (!ublox_.Begin()) 
+    { 
+        Serial.println("u-blox: ERROR"); 
+    } 
+    else 
+    { 
+        Serial.println("u-blox: OK"); 
+    }
+
+    // -------------------------------- 
+    // SCX-20 CAN 
+    // -------------------------------- 
+    /* * SCX-20 is currently being 
+    * investigated separately. 
+    * 
+    * * Leave the driver disabled for now. 
+    * */ 
+
+    Serial.println("SCX-20: disabled");
+
+    // -------------------------------- 
+    // GPS Manager 
+    // -------------------------------- 
+    if (!gpsManager_.Begin()) 
+    { 
+        Serial.println("GPS Manager: ERROR"); 
+    } 
+    else 
+    { 
+        Serial.println("GPS Manager: OK"); 
+    }
+    
+    // -------------------------------- 
+    // Heading Manager 
+    // -------------------------------- 
+    if (!headingManager_.Begin()) 
+    { 
+        Serial.println("Heading Manager: ERROR"); 
+    } 
+    else 
+    { 
+        Serial.println("Heading Manager: OK"); 
+    }
+    
+    // -------------------------------- 
+    // SD Card 
+    // --------------------------------
+    if (sdCard_.Begin())
     {
-        sdLogger_.Begin();
+        Serial.println("SD Card: OK");
+        if (sdLogger_.Begin())
+        {
+            Serial.println("SD Logger: OK");
+        }
+        else
+        {
+            Serial.println("SD Logger: ERROR");
+        }
+    }
+    else
+    {
+        Serial.println("SD Card: ERROR");
     }
 
     statusLED_.SetMode(StatusLED::Mode::NORMAL);
 
-    Serial.println("+++ START APP +++");
+    Serial.println("==============================");
+    Serial.println("System ready");
+    Serial.println("==============================");
 
     if (sdCard_.IsReady())
     {
@@ -78,8 +149,13 @@ void App::Begin()
 void App::Run()
 {
     statusLED_.Update();
+    //scx20CAN_.Update();
+    ublox_.Update();
+
     gpsManager_.Update();
-    //scx20_.Update();
+    headingManager_.Update();
+
+    sdLogger_.Update();
 
     static uint32_t lastButtonScan = 0;
 
@@ -93,23 +169,6 @@ void App::Run()
         display_.Update(event);
     }
 
-    static uint32_t lastLog = 0;
-
-    if (millis() - lastLog >= 1000)
-    {
-        lastLog = millis();
-
-        PositionData position;
-        HeadingData heading;
-
-        gpsManager_.GetPosition(position);
-        headingManager_.GetHeading(heading);
-
-        sdLogger_.LogNavigation(
-            position,
-            heading
-        );
-    }
 
     static uint32_t lastGPSPrint = 0;
     if (millis() - lastGPSPrint >= 1000)
@@ -132,6 +191,25 @@ void App::Run()
         else
         {
             Serial.println("GPS: NO FIX");
+        }
+    }
+
+        // Log once per second
+    if (
+        now - lastLogTime_
+        >= LOG_INTERVAL_MS
+    )
+    {
+        lastLogTime_ = now;
+
+        PositionData position;
+        HeadingData heading;
+        bool positionValid = gpsManager_.GetPosition(position); 
+        headingManager_.GetHeading( heading);
+
+        if (positionValid)
+        {
+            sdLogger_.LogNavigation(position, heading);
         }
     }
 
@@ -164,6 +242,9 @@ void App::Run()
     //         2
     //     );
     // }
+
+    // Handles periodic flush
+    sdLogger_.Update();
     
 }
 

@@ -21,10 +21,7 @@ bool SDCard::Begin()
     );
 
 
-    if (!SD.begin(
-        csPin_,
-        spi_
-    ))
+    if (!SD.begin(csPin_, spi_))
     {
         Serial.println("SD: initialization failed");
 
@@ -85,8 +82,62 @@ bool SDCard::CreateDirectory(const char* path)
 
     return SD.mkdir(path);
 }
+File SDCard::OpenAppend(const char* path)
+{
+    if (!ready_)
+        return File();
+
+    return SD.open(path, FILE_APPEND);
+}
 
 
+bool SDCard::Write(
+    File& file,
+    const char* data)
+{
+    if (!file)
+        return false;
+
+    return file.print(data) > 0;
+}
+
+
+bool SDCard::WriteLine(
+    File& file,
+    const char* data)
+{
+    if (!file)
+        return false;
+
+    if (file.println(data) == 0)
+        return false;
+
+    return true;
+}
+
+
+bool SDCard::Flush(File& file)
+{
+    if (!file)
+        return false;
+
+    file.flush();
+
+    return true;
+}
+
+
+bool SDCard::Close(File& file)
+{
+    if (!file)
+        return false;
+
+    file.close();
+
+    return true;
+}
+
+//=======================
 bool SDCard::AppendFile(
     const char* path,
     const char* data)

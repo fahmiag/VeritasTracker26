@@ -2,7 +2,10 @@
 
 
 SDLogger::SDLogger(SDCard& sdCard)
-    : sdCard_(sdCard)
+    : sdCard_(sdCard),
+      ready_(false),
+      currentDate_{0},
+      lastFlushTime_(0)
 {
 }
 
@@ -19,28 +22,106 @@ bool SDLogger::Begin()
     }
 
 
-    if (!HeaderExists())
+    if (!EnsureLogDirectory())
     {
-        return WriteHeader();
+        Serial.println(
+            "SDLogger: failed to create /logs"
+        );
+
+        return false;
     }
+
+
+    ready_ = true;
+
+    Serial.println(
+        "SDLogger: ready"
+    );
+
+    return true;
+}
+
+bool SDLogger::EnsureLogDirectory()
+{
+    return sdCard_.CreateDirectory(
+        "/logs"
+    );
+}
+
+bool SDLogger::CreateNewFile(
+    const char* date)
+{
+    char filename[40];
+
+    snprintf(
+        filename,
+        sizeof(filename),
+        "/logs/%s.csv",
+        date
+    );
+
+
+    Serial.print(
+        "SDLogger: opening "
+    );
+
+    Serial.println(filename);
+
+
+    logFile_ =
+        sdCard_.OpenAppend(filename);
+
+
+    if (!logFile_)
+    {
+        Serial.println(
+            "SDLogger: failed to open log file"
+        );
+
+        return false;
+    }
+
+
+    strncpy(
+        currentDate_,
+        date,
+        sizeof(currentDate_) - 1
+    );
+
+    currentDate_[
+        sizeof(currentDate_) - 1
+    ] = '\0';
+
+
+    // Check whether the file was empty
+    if (logFile_.size() == 0)
+    {
+        if (!WriteHeader())
+        {
+            CloseCurrentFile();
+
+            return false;
+        }
+    }
+
+
+    lastFlushTime_ = millis();
+
+
+    Serial.print(
+        "SDLogger: logging to "
+    );
+
+    Serial.println(filename);
 
 
     return true;
 }
 
-
-bool SDLogger::HeaderExists()
-{
-    return sdCard_.Exists(
-        logFile_
-    );
-}
-
-
 bool SDLogger::WriteHeader()
 {
     const char* header =
-        "time,"
+        "timestamp,"
         "position_source,"
         "latitude,"
         "longitude,"
@@ -49,164 +130,92 @@ bool SDLogger::WriteHeader()
         "satellites,"
         "hdop,"
         "heading,"
-        "heading_source\n";
+        "heading_source";
 
 
-    if (!sdCard_.WriteFile(
+    return sdCard_.WriteLine(
         logFile_,
         header
-    ))
-    {
-        Serial.println(
-            "SDLogger: failed to write header"
-        );
-
-        return false;
-    }
-
-
-    Serial.println(
-        "SDLogger: CSV header created"
     );
-
-    return true;
 }
 
-bool SDLogger::LogPosition(
+bool SDLogger::IsNewDay(
     const PositionData& position)
 {
-    if (!sdCard_.IsReady())
-    {
-        return false;
-    }
-
-
-    char buffer[256];
-
-
-    const char* source;
-
-
-    switch (position.source)
-    {
-        case PositionSource::UBLOX:
-            source = "UBLOX";
-            break;
-
-        case PositionSource::SCX20:
-            source = "SCX20";
-            break;
-
-        default:
-            source = "NONE";
-            break;
-    }
-
+    char date[11];
 
     snprintf(
-        buffer,
-        sizeof(buffer),
+        date,
+        sizeof(date),
 
-        "%02d:%02d:%02d,"
-        "%s,"
-        "%.7f,"
-        "%.7f,"
-        "%.2f,"
-        "%.2f,"
-        "%u,"
-        "%.2f,"
-        ","
-        "\n",
+        "%04d-%02d-%02d",
 
-        position.hour,
-        position.minute,
-        position.second,
-
-        source,
-
-        position.latitude,
-        position.longitude,
-
-        position.speed,
-        position.course,
-
-        position.satellites,
-
-        position.hdop
+        position.year,
+        position.month,
+        position.day
     );
 
 
-    return sdCard_.AppendFile(
-        logFile_,
-        buffer
-    );
+    return strcmp(
+        date,
+        currentDate_
+    ) != 0;
 }
 
-bool SDLogger::LogHeading(
-    const HeadingData& heading)
+bool SDLogger::OpenDailyFile(
+    const PositionData& position)
 {
-    if (!sdCard_.IsReady())
-    {
-        return false;
-    }
-
-
-    char buffer[128];
-
-
-    const char* source;
-
-
-    switch (heading.source)
-    {
-        case HeadingSource::SCX20:
-            source = "SCX20";
-            break;
-
-        default:
-            source = "NONE";
-            break;
-    }
+    char date[11];
 
 
     snprintf(
-        buffer,
-        sizeof(buffer),
+        date,
+        sizeof(date),
 
-        ","
-        ","
-        ","
-        ","
-        ","
-        ","
-        ","
-        ","
-        "%.2f,"
-        "%s\n",
+        "%04d-%02d-%02d",
 
-        heading.heading,
-
-        source
+        position.year,
+        position.month,
+        position.day
     );
 
 
-    return sdCard_.AppendFile(
-        logFile_,
-        buffer
-    );
+    if (logFile_)
+    {
+        if (!IsNewDay(position))
+        {
+            return true;
+        }
+
+
+        Serial.println(
+            "SDLogger: new UTC day"
+        );
+
+
+        Flush();
+
+        CloseCurrentFile();
+    }
+
+
+    return CreateNewFile(date);
 }
 
 bool SDLogger::LogNavigation(
     const PositionData& position,
     const HeadingData& heading)
 {
-    if (!sdCard_.IsReady())
-    {
+    if (!ready_)
         return false;
-    }
 
 
-    char buffer[300];
+    if (!position.valid)
+        return false;
+
+
+    if (!OpenDailyFile(position))
+        return false;
 
 
     const char* positionSource;
@@ -241,11 +250,15 @@ bool SDLogger::LogNavigation(
     }
 
 
-    snprintf(
-        buffer,
-        sizeof(buffer),
+    char line[300];
 
-        "%02d:%02d:%02d,"
+
+    snprintf(
+        line,
+        sizeof(line),
+
+        "%04d-%02d-%02dT"
+        "%02d:%02d:%02dZ,"
         "%s,"
         "%.7f,"
         "%.7f,"
@@ -254,7 +267,11 @@ bool SDLogger::LogNavigation(
         "%u,"
         "%.2f,"
         "%.2f,"
-        "%s\n",
+        "%s",
+
+        position.year,
+        position.month,
+        position.day,
 
         position.hour,
         position.minute,
@@ -278,8 +295,50 @@ bool SDLogger::LogNavigation(
     );
 
 
-    return sdCard_.AppendFile(
+    return sdCard_.WriteLine(
         logFile_,
-        buffer
+        line
     );
+}
+
+void SDLogger::Update()
+{
+    if (!ready_)
+        return;
+
+
+    uint32_t now = millis();
+
+
+    if (
+        now - lastFlushTime_
+        >= FLUSH_INTERVAL_MS
+    )
+    {
+        Flush();
+
+        lastFlushTime_ = now;
+    }
+}
+
+bool SDLogger::Flush()
+{
+    if (!logFile_)
+        return false;
+
+
+    return sdCard_.Flush(
+        logFile_
+    );
+}
+
+void SDLogger::CloseCurrentFile()
+{
+    if (logFile_)
+    {
+        sdCard_.Flush(logFile_);
+        sdCard_.Close(logFile_);
+
+        Serial.println("SDLogger: log file closed");
+    }
 }

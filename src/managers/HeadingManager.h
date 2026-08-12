@@ -1,21 +1,25 @@
 #pragma once
+#include <Arduino.h>
 
-#include "../drivers/SCX20CAN.h"
+//#include "../drivers/SCX20CAN.h"
 #include "../data/HeadingData.h"
 
 class HeadingManager
 {
 public:
+    HeadingManager();
 
     bool Begin();
 
     void Update();
-
+  
     bool GetHeading(HeadingData& heading);
+    
+    bool IsValid() const;
 
 private:
 
-    SCX20CAN scx20_;
 
-    HeadingData heading_;
+    HeadingData headingData_;
+
 };

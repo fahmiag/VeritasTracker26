@@ -1,12 +1,18 @@
 #pragma once
 
+// Managers
 #include "../managers/DisplayManager.h"
 #include "../managers/ButtonManager.h"
-#include "../drivers/StatusLED.h"
 #include "../managers/GPSManager.h"
 #include "../managers/HeadingManager.h"
+
+// Drivers
+#include "../drivers/UBloxGNSS.h"
+#include "../drivers/SCX20CAN.h"
+#include "../drivers/StatusLED.h"
 #include "../drivers/SDCard.h"
-#include "../drivers/SDCard.h"
+
+// Services
 #include "../services/SDLogger.h"
 
 //App coordinates modules but doesn't implement hardware details.
@@ -23,18 +29,41 @@ public:
 
 private:
 
-    DisplayManager display_;
-    ButtonManager buttons_;
-    StatusLED statusLED_;
+
+    // -----------------------------
+    // Hardware drivers
+    // -----------------------------
 
     UBloxGNSS ublox_;
-    SCX20CAN scx20_;
-
+    SCX20CAN scx20CAN_;
     SDCard sdCard_;
-    SDLogger sdLogger_;
 
+    // -----------------------------
+    // Managers
+    // -----------------------------
+    DisplayManager display_;
+    ButtonManager buttons_;
     GPSManager gpsManager_;
     HeadingManager headingManager_;
+
+    StatusLED statusLED_;
+
+
+    // -----------------------------
+    // Services
+    // -----------------------------
+    SDLogger sdLogger_;
+
+    // -----------------------------
+    // Logging
+    // -----------------------------
+    
+    uint32_t lastLogTime_;
+
+    static constexpr uint32_t
+        LOG_INTERVAL_MS = 1000;
+
+
 
     uint32_t lastDisplayUpdate_ = 0;
     uint32_t lastButtonUpdate_ = 0;

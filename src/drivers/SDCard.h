@@ -11,13 +11,22 @@ public:
     SDCard();
 
     bool Begin();
-
     bool IsReady() const;
-
     bool Exists(const char* path);
 
     bool CreateDirectory(const char* path);
 
+    File OpenAppend(const char* path);
+
+    bool Close(File& file);
+
+    bool Flush(File& file);
+
+    bool Write(File& file, const char* data);
+
+    bool WriteLine(File& file, const char* data);
+
+    //TODO: Check this 4 function used o not
     bool AppendFile(
         const char* path,
         const char* data

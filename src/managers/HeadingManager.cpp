@@ -1,24 +1,51 @@
 #include "HeadingManager.h"
 
 
+HeadingManager::HeadingManager()
+{
+    headingData_.valid = false;
+    headingData_.source = HeadingSource::NONE;
+    headingData_.heading = 0.0;
+    headingData_.rateOfTurn = 0.0;
+    headingData_.lastUpdate = 0;
+}
+
 bool HeadingManager::Begin()
 {
-    return scx20_.Begin();
+    headingData_.valid = false;
+    headingData_.source = HeadingSource::NONE;
+    headingData_.heading = 0.0; 
+    headingData_.rateOfTurn = 0.0; 
+    headingData_.lastUpdate = 0;
+
+    Serial.println("HeadingManager: initialized");
+
+    return true;
 }
 
 
 void HeadingManager::Update()
 {
-    scx20_.Update();
+    /*
+     * SCX-20 CAN decoding will be added later.
+     *
+     * For now, there is no heading source.
+     */
 
-    scx20_.GetHeading(heading_);
+
 }
 
 
-bool HeadingManager::GetHeading(
-    HeadingData& heading)
-{
-    heading = heading_;
 
-    return heading_.valid;
+
+bool HeadingManager::GetHeading( HeadingData& heading)
+{
+    heading = headingData_; 
+    return headingData_.valid;
+}
+
+
+bool HeadingManager::IsValid() const
+{
+    return headingData_.valid;
 }
