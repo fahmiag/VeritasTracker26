@@ -2,16 +2,18 @@
  * [x] Display timeout
  * [x] Add Led status blink
  * [x] Read GPS from RockBlock
+ * [x] Save data into 1 day logfile
  * 
  * //Suggested by chat GPT
  * [ ] SCX20 CAN
  * [ ] GPSManager source selection
  * [ ] Navigation/Heading data structure
- * [ ] Micro SD CSV logger
+ * [x] Micro SD CSV logger
  * [ ] OLED navigation/status pages
  * [ ] RockBLOCK satellite communication
  * [ ] Main system state machine
  * 
+ * [ ] Test Create new file every day
  * [ ] Pack Data
  * [ ] Send data over-the-air
  * [ ] Read Heading from Furuno
@@ -20,7 +22,7 @@
  * [ ] Add Buzzer to indicate Error
  * [ ] Add Millis to Serial Monitor
  * [ ] Add debug.h
- * 
+ * [ ] Need file heading for the first line opf csv file?
 */
 
 

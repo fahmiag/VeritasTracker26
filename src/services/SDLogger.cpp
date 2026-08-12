@@ -60,13 +60,10 @@ bool SDLogger::CreateNewFile(
         date
     );
 
-
-    Serial.print(
-        "SDLogger: opening "
-    );
-
+    Serial.print("SDLogger: opening ");
     Serial.println(filename);
 
+    bool fileExists = sdCard_.Exists(filename);
 
     logFile_ =
         sdCard_.OpenAppend(filename);
@@ -81,6 +78,11 @@ bool SDLogger::CreateNewFile(
         return false;
     }
 
+    if (!fileExists)
+    {
+        WriteHeader();
+    }
+
 
     strncpy(
         currentDate_,
@@ -93,16 +95,34 @@ bool SDLogger::CreateNewFile(
     ] = '\0';
 
 
-    // Check whether the file was empty
-    if (logFile_.size() == 0)
-    {
-        if (!WriteHeader())
-        {
-            CloseCurrentFile();
+    // ---------------------------------
+    // New file?
+    // ---------------------------------
 
-            return false;
-        }
-    }
+    // if (logFile_.size() == 0)
+    // {
+    //     Serial.println(
+    //         "SDLogger: new file - writing header"
+    //     );
+
+
+    //     if (!WriteHeader())
+    //     {
+    //         Serial.println(
+    //             "SDLogger: failed to write header"
+    //         );
+
+    //         CloseCurrentFile();
+
+    //         return false;
+    //     }
+    // }
+    // else
+    // {
+    //     Serial.println(
+    //         "SDLogger: existing file - header skipped"
+    //     );
+    // }
 
 
     lastFlushTime_ = millis();
