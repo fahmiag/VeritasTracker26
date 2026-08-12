@@ -34,7 +34,7 @@ private:
     // Hardware drivers
     // -----------------------------
 
-    UBloxGNSS ublox_;
+   // UBloxGNSS ublox_;
     SCX20CAN scx20CAN_;
     SDCard sdCard_;
 

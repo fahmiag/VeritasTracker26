@@ -31,6 +31,7 @@ void UBloxGNSS::Update()
     while (serial_.available())
     {
         char c = serial_.read();
+       // Serial.print(c);
 
         gps_.encode(c);
     }
@@ -50,6 +51,12 @@ void UBloxGNSS::Update()
             gps_.location.lng();
 
         position_.valid = true;
+
+        position_.source =
+            PositionSource::UBLOX;
+
+        position_.lastUpdate =
+            millis();
     }
 
 
@@ -111,6 +118,22 @@ void UBloxGNSS::Update()
 
         position_.second =
             gps_.time.second();
+    }
+
+    // ---------------------------------------------
+    // UTC Date
+    // ---------------------------------------------
+
+    if (gps_.date.isValid())
+    {
+        position_.year =
+            gps_.date.year();
+
+        position_.month =
+            gps_.date.month();
+
+        position_.day =
+            gps_.date.day();
     }
 }
 

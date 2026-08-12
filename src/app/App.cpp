@@ -19,7 +19,7 @@
  * [ ] Safe dat into sd card csv
  * [ ] Add Buzzer to indicate Error
  * [ ] Add Millis to Serial Monitor
- * 
+ * [ ] Add debug.h
  * 
 */
 
@@ -56,14 +56,14 @@ void App::Begin()
     // u-blox GNSS 
     // --------------------------------
 
-    if (!ublox_.Begin()) 
-    { 
-        Serial.println("u-blox: ERROR"); 
-    } 
-    else 
-    { 
-        Serial.println("u-blox: OK"); 
-    }
+    // if (!ublox_.Begin()) 
+    // { 
+    //     Serial.println("u-blox: ERROR"); 
+    // } 
+    // else 
+    // { 
+    //     Serial.println("u-blox: OK"); 
+    // }
 
     // -------------------------------- 
     // SCX-20 CAN 
@@ -150,7 +150,7 @@ void App::Run()
 {
     statusLED_.Update();
     //scx20CAN_.Update();
-    ublox_.Update();
+   // ublox_.Update();
 
     gpsManager_.Update();
     headingManager_.Update();
