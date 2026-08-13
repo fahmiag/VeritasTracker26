@@ -653,7 +653,7 @@ void DisplayManager::DrawGPSStatus()
         "SAT:%d HDOP:%.1f",
         position_.satellites,
         position_.hdop
-    );
+    ); 
 
     oled_.DrawText(
         0,

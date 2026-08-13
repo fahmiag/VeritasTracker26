@@ -31,6 +31,9 @@ namespace PinMap
     constexpr uint8_t UBLOX_RX = 16; // GPIO16 = RX2;
     constexpr uint8_t UBLOX_TX = 17; // GPIO17 = TX2;
 
+    constexpr uint8_t ROCKBLOCK_RX = 33;
+    constexpr uint8_t ROCKBLOCK_TX = 32;
+
     // ------------------------------------------------
     // SCX-20 CAN
     // -----------------------------------------------

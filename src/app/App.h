@@ -11,6 +11,7 @@
 #include "../drivers/SCX20CAN.h"
 #include "../drivers/StatusLED.h"
 #include "../drivers/SDCard.h"
+#include "../drivers/RockBlockPlus9704.h"
 
 // Services
 #include "../services/SDLogger.h"
@@ -33,6 +34,8 @@ private:
     // -----------------------------
     // Hardware drivers
     // -----------------------------
+
+    RockBlockPlus9704 rockBlock_;
 
    // UBloxGNSS ublox_;
     SCX20CAN scx20CAN_;

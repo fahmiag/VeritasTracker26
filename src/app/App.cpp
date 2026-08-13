@@ -54,6 +54,20 @@ void App::Begin()
 
     delay(500);
 
+    if (rockBlock_.Begin())
+    {
+        Serial.println("RockBLOCK: OK");
+    }
+    else
+    {
+        Serial.println("RockBLOCK: ERROR");
+    }
+
+    rockBlock_.SendText(
+        RAW_TOPIC,
+        "Hello from application!"
+    );
+
     Serial.println();
     Serial.println("==============================");
     Serial.println(" GPS Tracker Starting");
@@ -244,162 +258,164 @@ void App::Run()
     // Current time
     // -----------------------------------------
 
-    uint32_t now = millis();
+    //uint32_t now = millis();
+
+    rockBlock_.Update();
+    delay(10);
+
+    // // -----------------------------------------
+    // // Status LED
+    // // -----------------------------------------
+
+    // statusLED_.Update();
 
 
-    // -----------------------------------------
-    // Status LED
-    // -----------------------------------------
+    // // -----------------------------------------
+    // // GPS
+    // // -----------------------------------------
 
-    statusLED_.Update();
-
-
-    // -----------------------------------------
-    // GPS
-    // -----------------------------------------
-
-    gpsManager_.Update();
+    // gpsManager_.Update();
 
 
-    // -----------------------------------------
-    // Heading
-    // -----------------------------------------
+    // // -----------------------------------------
+    // // Heading
+    // // -----------------------------------------
 
-    headingManager_.Update();
-
-
-    // -----------------------------------------
-    // Get current position
-    // -----------------------------------------
-
-    PositionData position;
-
-    bool positionValid =
-        gpsManager_.GetPosition(
-            position
-        );
+    // headingManager_.Update();
 
 
-    // -----------------------------------------
-    // Buttons
-    // -----------------------------------------
+    // // -----------------------------------------
+    // // Get current position
+    // // -----------------------------------------
+
+    // PositionData position;
+
+    // bool positionValid =
+    //     gpsManager_.GetPosition(
+    //         position
+    //     );
+
+
+    // // -----------------------------------------
+    // // Buttons
+    // // -----------------------------------------
 
     
-    buttons_.Update();
+    // buttons_.Update();
 
-    ButtonEvent buttonEvent =
-        buttons_.GetEvent();
-
-
-    // -----------------------------------------
-    // OLED
-    // -----------------------------------------
-
-    display_.Update(
-        buttonEvent,
-        position
-    );
+    // ButtonEvent buttonEvent =
+    //     buttons_.GetEvent();
 
 
-    // -----------------------------------------
-    // Print GPS information
-    // -----------------------------------------
+    // // -----------------------------------------
+    // // OLED
+    // // -----------------------------------------
 
-    static uint32_t lastGPSPrint = 0;
-
-
-    if (
-        now - lastGPSPrint >= 1000
-    )
-    {
-        lastGPSPrint = now;
+    // display_.Update(
+    //     buttonEvent,
+    //     position
+    // );
 
 
-        if (positionValid)
-        {
-            Serial.print(
-                "uBlox POS: "
-            );
+    // // -----------------------------------------
+    // // Print GPS information
+    // // -----------------------------------------
+
+    // // static uint32_t lastGPSPrint = 0;
 
 
-            Serial.print(
-                position.latitude,
-                6
-            );
+    // // if (
+    // //     now - lastGPSPrint >= 1000
+    // // )
+    // // {
+    // //     lastGPSPrint = now;
 
 
-            Serial.print(
-                ", "
-            );
+    // //     if (positionValid)
+    // //     {
+    // //         Serial.print(
+    // //             "uBlox POS: "
+    // //         );
 
 
-            Serial.print(
-                position.longitude,
-                6
-            );
+    // //         Serial.print(
+    // //             position.latitude,
+    // //             6
+    // //         );
 
 
-            Serial.print(
-                "  SAT="
-            );
+    // //         Serial.print(
+    // //             ", "
+    // //         );
 
 
-            Serial.print(
-                position.satellites
-            );
+    // //         Serial.print(
+    // //             position.longitude,
+    // //             6
+    // //         );
 
 
-            Serial.print(
-                "  HDOP="
-            );
+    // //         Serial.print(
+    // //             "  SAT="
+    // //         );
 
 
-            Serial.println(
-                position.hdop
-            );
-        }
-        else
-        {
-            Serial.println(
-                "GPS: NO FIX"
-            );
-        }
-    }
+    // //         Serial.print(
+    // //             position.satellites
+    // //         );
 
 
-    // -----------------------------------------
-    // Logging
-    // -----------------------------------------
-
-    if (
-        now - lastLogTime_
-        >= LOG_INTERVAL_MS
-    )
-    {
-        lastLogTime_ = now;
+    // //         Serial.print(
+    // //             "  HDOP="
+    // //         );
 
 
-        HeadingData heading;
+    // //         Serial.println(
+    // //             position.hdop
+    // //         );
+    // //     }
+    // //     else
+    // //     {
+    // //         Serial.println(
+    // //             "GPS: NO FIX"
+    // //         );
+    // //     }
+    // // }
 
 
-        headingManager_.GetHeading(
-            heading
-        );
+    // // -----------------------------------------
+    // // Logging
+    // // -----------------------------------------
+
+    // if (
+    //     now - lastLogTime_
+    //     >= LOG_INTERVAL_MS
+    // )
+    // {
+    //     lastLogTime_ = now;
 
 
-        if (positionValid)
-        {
-            sdLogger_.LogNavigation(
-                position,
-                heading
-            );
-        }
-    }
+    //     HeadingData heading;
 
 
-    // -----------------------------------------
-    // SD Logger periodic flush
-    // -----------------------------------------
+    //     headingManager_.GetHeading(
+    //         heading
+    //     );
 
-    sdLogger_.Update();
+
+    //     if (positionValid)
+    //     {
+    //         sdLogger_.LogNavigation(
+    //             position,
+    //             heading
+    //         );
+    //     }
+    // }
+
+
+    // // -----------------------------------------
+    // // SD Logger periodic flush
+    // // -----------------------------------------
+
+    // sdLogger_.Update();
 }
