@@ -26,7 +26,7 @@ public:
 
     bool WriteLine(File& file, const char* data);
 
-    //TODO: Check this 4 function used o not
+    //TODO: Check this 4 function used or not
     bool AppendFile(
         const char* path,
         const char* data

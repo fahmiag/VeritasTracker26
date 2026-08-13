@@ -1,146 +1,231 @@
-/*TODO:
- * [x] Display timeout
- * [x] Add Led status blink
- * [x] Read GPS from RockBlock
- * [x] Save data into 1 day logfile
- * 
- * //Suggested by chat GPT
- * [ ] SCX20 CAN
- * [ ] GPSManager source selection
- * [ ] Navigation/Heading data structure
- * [x] Micro SD CSV logger
- * [ ] OLED navigation/status pages
- * [ ] RockBLOCK satellite communication
- * [ ] Main system state machine
- * 
- * [ ] Test Create new file every day
- * [ ] Pack Data
- * [ ] Send data over-the-air
- * [ ] Read Heading from Furuno
- * [ ] Read GPS from Furuno
- * [ ] Safe dat into sd card csv
- * [ ] Add Buzzer to indicate Error
- * [ ] Add Millis to Serial Monitor
- * [ ] Add debug.h
- * [ ] Need file heading for the first line opf csv file?
+/*
+TODO:
+
+[x] Display timeout
+[x] Add Led status blink
+[x] Read GPS from RockBlock
+[x] Save data into 1 day logfile
+[x] Micro SD CSV logger
+[x] OLED navigation/status pages
+
+[ ] SCX20 CAN
+[ ] GPSManager source selection
+[ ] Navigation/Heading data structure
+[ ] RockBLOCK satellite communication
+[ ] Main system state machine
+
+[x] Test Create new file every day
+[ ] Pack Data
+[ ] Send data over-the-air
+[ ] Read Heading from Furuno
+[ ] Read GPS from Furuno
+[ ] Add Buzzer to indicate Error
+[ ] Add Millis to Serial Monitor
+[ ] Add debug.h
 */
 
 
 #include "App.h"
-#include "config/Config.h"
+
+#include "../config/Config.h"
+#include "../config/PinMap.h"
+
 #include <Arduino.h>
 
-#include "config/PinMap.h"
 
-//#include <avr/wdt.h> //TODO Change to ESP wdt
+// =====================================================
+// Constructor
+// =====================================================
+
 App::App()
-    :   sdLogger_(sdCard_), 
-        lastLogTime_(0)
-
+    : sdLogger_(sdCard_),
+      lastLogTime_(0)
 {
 }
+
+
+// =====================================================
+// Begin
+// =====================================================
 
 void App::Begin()
 {
     Serial.begin(115200);
 
-    delay(500); 
-    Serial.println(); 
-    Serial.println("=============================="); 
-    Serial.println(" GPS Tracker Starting"); 
+    delay(500);
+
+    Serial.println();
+    Serial.println("==============================");
+    Serial.println(" GPS Tracker Starting");
     Serial.println("==============================");
 
-    display_.Begin();
-    buttons_.Begin();
-    statusLED_.Begin();
 
-    // -------------------------------- 
-    // u-blox GNSS 
-    // --------------------------------
+    // -----------------------------------------
+    // Display
+    // -----------------------------------------
 
-    // if (!ublox_.Begin()) 
-    // { 
-    //     Serial.println("u-blox: ERROR"); 
-    // } 
-    // else 
-    // { 
-    //     Serial.println("u-blox: OK"); 
-    // }
+    if (display_.Begin())
+    {
+        Serial.println("Display: OK");
+    }
+    else
+    {
+        Serial.println("Display: ERROR");
+    }
 
-    // -------------------------------- 
-    // SCX-20 CAN 
-    // -------------------------------- 
-    /* * SCX-20 is currently being 
-    * investigated separately. 
-    * 
-    * * Leave the driver disabled for now. 
-    * */ 
+
+    // -----------------------------------------
+    // Buttons
+    // -----------------------------------------
+
+    if (buttons_.Begin())
+    {
+        Serial.println("Buttons: OK");
+    }
+    else
+    {
+        Serial.println("Buttons: ERROR");
+    }
+
+
+    // -----------------------------------------
+    // Status LED
+    // -----------------------------------------
+
+    if (statusLED_.Begin())
+    {
+        Serial.println("Status LED: OK");
+    }
+    else
+    {
+        Serial.println("Status LED: ERROR");
+    }
+
+
+    // -----------------------------------------
+    // SCX-20 CAN
+    // -----------------------------------------
+
+    /*
+     * SCX-20 is currently being
+     * investigated separately.
+     *
+     * Leave the driver disabled for now.
+     */
 
     Serial.println("SCX-20: disabled");
 
-    // -------------------------------- 
-    // GPS Manager 
-    // -------------------------------- 
-    if (!gpsManager_.Begin()) 
-    { 
-        Serial.println("GPS Manager: ERROR"); 
-    } 
-    else 
-    { 
-        Serial.println("GPS Manager: OK"); 
+
+    // -----------------------------------------
+    // GPS Manager
+    // -----------------------------------------
+
+    if (!gpsManager_.Begin())
+    {
+        Serial.println(
+            "GPS Manager: ERROR"
+        );
     }
-    
-    // -------------------------------- 
-    // Heading Manager 
-    // -------------------------------- 
-    if (!headingManager_.Begin()) 
-    { 
-        Serial.println("Heading Manager: ERROR"); 
-    } 
-    else 
-    { 
-        Serial.println("Heading Manager: OK"); 
+    else
+    {
+        Serial.println(
+            "GPS Manager: OK"
+        );
     }
-    
-    // -------------------------------- 
-    // SD Card 
-    // --------------------------------
+
+
+    // -----------------------------------------
+    // Heading Manager
+    // -----------------------------------------
+
+    if (!headingManager_.Begin())
+    {
+        Serial.println(
+            "Heading Manager: ERROR"
+        );
+    }
+    else
+    {
+        Serial.println(
+            "Heading Manager: OK"
+        );
+    }
+
+
+    // -----------------------------------------
+    // SD Card
+    // -----------------------------------------
+
     if (sdCard_.Begin())
     {
-        Serial.println("SD Card: OK");
+        Serial.println(
+            "SD Card: OK"
+        );
+
+
         if (sdLogger_.Begin())
         {
-            Serial.println("SD Logger: OK");
+            Serial.println(
+                "SD Logger: OK"
+            );
         }
         else
         {
-            Serial.println("SD Logger: ERROR");
+            Serial.println(
+                "SD Logger: ERROR"
+            );
         }
     }
     else
     {
-        Serial.println("SD Card: ERROR");
+        Serial.println(
+            "SD Card: ERROR"
+        );
     }
 
-    statusLED_.SetMode(StatusLED::Mode::NORMAL);
+
+    // -----------------------------------------
+    // Normal LED operation
+    // -----------------------------------------
+
+    statusLED_.SetMode(
+        StatusLED::Mode::NORMAL
+    );
+
 
     Serial.println("==============================");
     Serial.println("System ready");
     Serial.println("==============================");
 
+
+    // -----------------------------------------
+    // SD card test
+    // -----------------------------------------
+
+    /*
+     * Temporary SD card test.
+     *
+     * Can remove this after SD card
+     * hardware has been verified.
+     */
+
     if (sdCard_.IsReady())
     {
+        Serial.println();
         Serial.println("SD TEST");
+
 
         sdCard_.WriteFile(
             "/test.txt",
             "Hello from ESP32\n"
         );
 
+
         sdCard_.AppendFile(
             "/test.txt",
             "SD card is working\n"
         );
+
 
         sdCard_.ReadFile(
             "/test.txt"
@@ -148,55 +233,144 @@ void App::Begin()
     }
 }
 
+
+// =====================================================
+// Run
+// =====================================================
+
 void App::Run()
 {
-    statusLED_.Update();
-    //scx20CAN_.Update();
-   // ublox_.Update();
-
-    gpsManager_.Update();
-    headingManager_.Update();
-
-    sdLogger_.Update();
-
-    static uint32_t lastButtonScan = 0;
+    // -----------------------------------------
+    // Current time
+    // -----------------------------------------
 
     uint32_t now = millis();
 
-    if (now - lastButtonScan >= Config::BUTTON_SCAN_MS)
-    {
-        lastButtonScan = now;
-        buttons_.Update();
-        ButtonEvent event = buttons_.GetEvent();
-        display_.Update(event);
-    }
 
+    // -----------------------------------------
+    // Status LED
+    // -----------------------------------------
+
+    statusLED_.Update();
+
+
+    // -----------------------------------------
+    // GPS
+    // -----------------------------------------
+
+    gpsManager_.Update();
+
+
+    // -----------------------------------------
+    // Heading
+    // -----------------------------------------
+
+    headingManager_.Update();
+
+
+    // -----------------------------------------
+    // Get current position
+    // -----------------------------------------
+
+    PositionData position;
+
+    bool positionValid =
+        gpsManager_.GetPosition(
+            position
+        );
+
+
+    // -----------------------------------------
+    // Buttons
+    // -----------------------------------------
+
+    
+    buttons_.Update();
+
+    ButtonEvent buttonEvent =
+        buttons_.GetEvent();
+
+
+    // -----------------------------------------
+    // OLED
+    // -----------------------------------------
+
+    display_.Update(
+        buttonEvent,
+        position
+    );
+
+
+    // -----------------------------------------
+    // Print GPS information
+    // -----------------------------------------
 
     static uint32_t lastGPSPrint = 0;
-    if (millis() - lastGPSPrint >= 1000)
+
+
+    if (
+        now - lastGPSPrint >= 1000
+    )
     {
-        lastGPSPrint = millis();
+        lastGPSPrint = now;
 
-        PositionData position;
 
-        if (gpsManager_.GetPosition(position))
+        if (positionValid)
         {
-            Serial.print("uBlox POS: ");
-            Serial.print(position.latitude, 6);
-            Serial.print(", ");
-            Serial.print(position.longitude, 6);
-            Serial.print("  SAT=");
-            Serial.print(position.satellites);
-            Serial.print("  HDOP=");
-            Serial.println(position.hdop);
+            Serial.print(
+                "uBlox POS: "
+            );
+
+
+            Serial.print(
+                position.latitude,
+                6
+            );
+
+
+            Serial.print(
+                ", "
+            );
+
+
+            Serial.print(
+                position.longitude,
+                6
+            );
+
+
+            Serial.print(
+                "  SAT="
+            );
+
+
+            Serial.print(
+                position.satellites
+            );
+
+
+            Serial.print(
+                "  HDOP="
+            );
+
+
+            Serial.println(
+                position.hdop
+            );
         }
         else
         {
-            Serial.println("GPS: NO FIX");
+            Serial.println(
+                "GPS: NO FIX"
+            );
         }
     }
 
-        // Log once per second
+
+    // -----------------------------------------
+    // Logging
+    // -----------------------------------------
+
     if (
         now - lastLogTime_
         >= LOG_INTERVAL_MS
@@ -204,49 +378,28 @@ void App::Run()
     {
         lastLogTime_ = now;
 
-        PositionData position;
+
         HeadingData heading;
-        bool positionValid = gpsManager_.GetPosition(position); 
-        headingManager_.GetHeading( heading);
+
+
+        headingManager_.GetHeading(
+            heading
+        );
+
 
         if (positionValid)
         {
-            sdLogger_.LogNavigation(position, heading);
+            sdLogger_.LogNavigation(
+                position,
+                heading
+            );
         }
     }
 
-    // PositionData scxPosition;
 
-    // if (scx20_.GetPosition(scxPosition))
-    // {
-    //     Serial.print("SCX20 POS: ");
+    // -----------------------------------------
+    // SD Logger periodic flush
+    // -----------------------------------------
 
-    //     Serial.print(scxPosition.latitude, 7);
-    //     Serial.print(", ");
-
-    //     Serial.print(scxPosition.longitude, 7);
-
-    //     Serial.print(" SOG=");
-    //     Serial.print(scxPosition.speed);
-
-    //     Serial.print(" COG=");
-    //     Serial.println(scxPosition.course);
-    // }
-
-    // HeadingData heading;
-
-    // if (scx20_.GetHeading(heading))
-    // {
-    //     Serial.print("SCX20 HEADING: ");
-
-    //     Serial.println(
-    //         heading.heading,
-    //         2
-    //     );
-    // }
-
-    // Handles periodic flush
     sdLogger_.Update();
-    
 }
-

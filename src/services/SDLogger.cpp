@@ -80,6 +80,7 @@ bool SDLogger::CreateNewFile(
 
     if (!fileExists)
     {
+        Serial.println("SDLogger: new file - writing header");
         WriteHeader();
     }
 
