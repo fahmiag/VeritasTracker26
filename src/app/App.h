@@ -29,6 +29,7 @@ public:
 
     void Begin();
     void Run();
+    void SendTestTelemetry();
 
 private:
 

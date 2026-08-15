@@ -64,12 +64,14 @@ void App::Begin()
         Serial.println("RockBLOCK: ERROR");
     }
 
-    rockBlock_.SendText(
-        RAW_TOPIC,
-        "Hello from application!"
-    );
+    // rockBlock_.SendText(
+    //     RAW_TOPIC,
+    //     "Hello from application!"
+    // );
 
     satelliteManager_.Begin();
+
+    SendTestTelemetry();
 
     Serial.println();
     Serial.println("==============================");
@@ -422,4 +424,22 @@ void App::Run()
     // // -----------------------------------------
 
     // sdLogger_.Update();
+}
+
+void App::SendTestTelemetry()
+{
+    Serial.println("SendTestTelemetry()");
+    TelemetryPacket packet;
+
+    packet.version = 1;
+    packet.flags = 0;
+
+    packet.latitude = 29687130;
+    packet.longitude = 1017957430;
+
+    packet.heading = 123;
+
+    packet.satellites = 10;
+
+    satelliteManager_.SendTelemetry(packet);
 }

@@ -66,9 +66,15 @@ bool SatelliteManager::SendTelemetry(
         payloadHex_
     );
 
-    return modem_.SendText(
-        TELEMETRY_TOPIC,
-        payloadHex_
+    // return modem_.SendText(
+    //     TELEMETRY_TOPIC,
+    //     payloadHex_
+    // );
+
+    return modem_.SendBinary(
+        RAW_TOPIC, //this is important
+        buffer,
+        length
     );
 }
 
@@ -76,3 +82,4 @@ bool SatelliteManager::IsBusy() const
 {
     return modem_.IsSending();
 }
+

@@ -29,7 +29,7 @@ public:
     bool SendBinary(
         uint16_t topic,
         const uint8_t* data,
-        uint16_t length
+        size_t length
     );
 
 private:

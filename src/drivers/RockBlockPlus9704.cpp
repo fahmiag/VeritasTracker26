@@ -175,9 +175,11 @@ bool RockBlockPlus9704::WasLastSendSuccessful() const
 bool RockBlockPlus9704::SendBinary(
     uint16_t topic,
     const uint8_t* data,
-    uint16_t length
+    size_t length
 )
 {
+    Serial.println("RockBLOCK: SendBinary() called");
+
     if (!initialized_)
     {
         return false;
