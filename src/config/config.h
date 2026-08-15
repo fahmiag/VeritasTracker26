@@ -18,6 +18,10 @@ namespace Config
     static constexpr uint32_t NORMAL_OFF_MS = 2000;
     static constexpr uint32_t ERROR_INTERVAL_MS  = 200;
 
+    constexpr uint8_t TELEMETRY_VERSION = 1;
+    constexpr uint8_t TELEMETRY_TYPE_POSITION = 1;
+    static constexpr uint8_t PACKET_SIZE = 19;
+
     //constexpr uint32_t SATELLITE_INTERVAL_MS = 60000;
 
     //constexpr uint32_t GPS_BAUD = 115200;

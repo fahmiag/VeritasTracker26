@@ -5,6 +5,8 @@
 #include "TelemetryPacket.h"
 #include "TelemetryEncoder.h"
 #include "../drivers/RockBlockPlus9704.h"
+#include "../data/PositionData.h"
+#include "../data/HeadingData.h"
 
 class SatelliteManager
 {
@@ -24,6 +26,11 @@ public:
 
     bool IsBusy() const;
 
+    void SetTelemetryData(
+        const PositionData& position,
+        const HeadingData& heading
+    );
+
 private:
 
     RockBlockPlus9704& modem_;
@@ -33,4 +40,11 @@ private:
     static constexpr uint16_t TELEMETRY_TOPIC = 1;
 
     char payloadHex_[128];
+
+    static constexpr uint32_t TELEMETRY_INTERVAL_MS =
+        5UL * 60UL * 1000UL;
+
+    uint32_t lastTelemetryTime_;
+
+    bool telemetryTimerStarted_;
 };

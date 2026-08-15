@@ -28,7 +28,7 @@ bool SatelliteManager::SendTelemetry(
 
     TelemetryPacket txPacket = packet;
 
-    txPacket.sequence = sequence_++;
+   // txPacket.sequence = sequence_++;
 
     uint8_t buffer[32];
 

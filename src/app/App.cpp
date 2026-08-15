@@ -71,7 +71,7 @@ void App::Begin()
 
     satelliteManager_.Begin();
 
-    SendTestTelemetry();
+    //SendTestTelemetry();
 
     Serial.println();
     Serial.println("==============================");
@@ -263,24 +263,24 @@ void App::Run()
     // Current time
     // -----------------------------------------
 
-    //uint32_t now = millis();
+    uint32_t now = millis();
 
     rockBlock_.Update();
     satelliteManager_.Update();
-    delay(10);
+
 
     // // -----------------------------------------
     // // Status LED
     // // -----------------------------------------
 
-    // statusLED_.Update();
+     statusLED_.Update();
 
 
     // // -----------------------------------------
     // // GPS
     // // -----------------------------------------
 
-    // gpsManager_.Update();
+     gpsManager_.Update();
 
 
     // // -----------------------------------------
@@ -296,10 +296,10 @@ void App::Run()
 
     // PositionData position;
 
-    // bool positionValid =
-    //     gpsManager_.GetPosition(
-    //         position
-    //     );
+    bool positionValid =
+        gpsManager_.GetPosition(
+            position
+        );
 
 
     // // -----------------------------------------
@@ -307,20 +307,28 @@ void App::Run()
     // // -----------------------------------------
 
     
-    // buttons_.Update();
+    buttons_.Update();
 
-    // ButtonEvent buttonEvent =
-    //     buttons_.GetEvent();
+    ButtonEvent buttonEvent =
+        buttons_.GetEvent();
 
 
     // // -----------------------------------------
     // // OLED
     // // -----------------------------------------
 
-    // display_.Update(
-    //     buttonEvent,
-    //     position
-    // );
+    display_.Update(
+        buttonEvent,
+        position
+    );
+
+    if (now - lastTelemetryTime_ >= TELEMETRY_INTERVAL_MS)
+    {
+        lastTelemetryTime_ = now;
+
+        SendTelemetry();
+        Serial.println("SendTelemetry");
+    }
 
 
     // // -----------------------------------------
@@ -423,23 +431,74 @@ void App::Run()
     // // SD Logger periodic flush
     // // -----------------------------------------
 
-    // sdLogger_.Update();
+     sdLogger_.Update();
 }
 
-void App::SendTestTelemetry()
+void App::SendTelemetry()
 {
-    Serial.println("SendTestTelemetry()");
-    TelemetryPacket packet;
+    if (!position.valid)
+    {
+        Serial.println(
+            "[SAT] GPS position invalid"
+        );
 
-    packet.version = 1;
-    packet.flags = 0;
+        return;
+    }
 
-    packet.latitude = 29687130;
-    packet.longitude = 1017957430;
+    TelemetryPacket packet{};
 
-    packet.heading = 123;
+    packet.version =
+        Telemetry::VERSION;
 
-    packet.satellites = 10;
+    packet.type =
+        static_cast<uint8_t>(
+            Telemetry::Type::POSITION
+        );
+
+    packet.flags =
+        Telemetry::NONE;
+
+    if (position.valid)
+    {
+        packet.flags |=
+            Telemetry::GPS_VALID;
+    }
+
+    if (heading.valid)
+    {
+        packet.flags |=
+            Telemetry::HEADING_VALID;
+    }
+
+    packet.timestamp =
+        DateTimeToUnix(
+            position.year,
+            position.month,
+            position.day,
+            position.hour,
+            position.minute,
+            position.second
+        );
+
+    packet.latitude =
+        static_cast<int32_t>(
+            position.latitude * 10000000.0
+        );
+
+    packet.longitude =
+        static_cast<int32_t>(
+            position.longitude * 10000000.0
+        );
+
+    packet.cog =
+        static_cast<uint16_t>(
+            position.course * 100.0
+        );
+
+    packet.heading =
+        static_cast<uint16_t>(
+            heading.heading * 100.0
+        );
 
     satelliteManager_.SendTelemetry(packet);
 }

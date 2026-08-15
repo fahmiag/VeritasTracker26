@@ -14,7 +14,10 @@
 #include "../drivers/RockBlockPlus9704.h"
 
 #include "../Satellite/SatelliteManager.h"
+#include "../Satellite/TelemetryConfig.h"
+#include "../Satellite/TelemetryPacket.h"
 
+#include "../utils/TimeUtils.h"
 // Services
 #include "../services/SDLogger.h"
 
@@ -29,11 +32,11 @@ public:
 
     void Begin();
     void Run();
-    void SendTestTelemetry();
 
 private:
 
-
+    PositionData position;
+    HeadingData heading;
     // -----------------------------
     // Hardware drivers
     // -----------------------------
@@ -74,6 +77,13 @@ private:
 
     uint32_t lastDisplayUpdate_ = 0;
     uint32_t lastButtonUpdate_ = 0;
+
+    uint32_t lastTelemetryTime_;
+
+    static constexpr uint32_t TELEMETRY_INTERVAL_MS =
+        5UL * 60UL * 1000UL;
+
+    void SendTelemetry();
 
     // GPSManager gps;
     // HeadingManager heading;
