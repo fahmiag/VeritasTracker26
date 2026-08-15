@@ -13,6 +13,8 @@
 #include "../drivers/SDCard.h"
 #include "../drivers/RockBlockPlus9704.h"
 
+#include "../Satellite/SatelliteManager.h"
+
 // Services
 #include "../services/SDLogger.h"
 
@@ -36,6 +38,7 @@ private:
     // -----------------------------
 
     RockBlockPlus9704 rockBlock_;
+    SatelliteManager satelliteManager_;
 
    // UBloxGNSS ublox_;
     SCX20CAN scx20CAN_;
@@ -51,7 +54,7 @@ private:
 
     StatusLED statusLED_;
 
-
+ 
     // -----------------------------
     // Services
     // -----------------------------

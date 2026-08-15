@@ -39,7 +39,8 @@ TODO:
 
 App::App()
     : sdLogger_(sdCard_),
-      lastLogTime_(0)
+      lastLogTime_(0),
+      satelliteManager_(rockBlock_)
 {
 }
 
@@ -67,6 +68,8 @@ void App::Begin()
         RAW_TOPIC,
         "Hello from application!"
     );
+
+    satelliteManager_.Begin();
 
     Serial.println();
     Serial.println("==============================");
@@ -261,6 +264,7 @@ void App::Run()
     //uint32_t now = millis();
 
     rockBlock_.Update();
+    satelliteManager_.Update();
     delay(10);
 
     // // -----------------------------------------

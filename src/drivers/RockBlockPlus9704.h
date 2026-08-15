@@ -26,6 +26,12 @@ public:
 
     bool WasLastSendSuccessful() const;
 
+    bool SendBinary(
+        uint16_t topic,
+        const uint8_t* data,
+        uint16_t length
+    );
+
 private:
 
     HardwareSerial serial_;

@@ -171,3 +171,59 @@ bool RockBlockPlus9704::WasLastSendSuccessful() const
 {
     return lastSendSuccessful_;
 }
+
+bool RockBlockPlus9704::SendBinary(
+    uint16_t topic,
+    const uint8_t* data,
+    uint16_t length
+)
+{
+    if (!initialized_)
+    {
+        return false;
+    }
+
+    if (sending_)
+    {
+        Serial.println(
+            "RockBLOCK: already sending"
+        );
+
+        return false;
+    }
+
+    if (data == nullptr || length == 0)
+    {
+        return false;
+    }
+
+    Serial.println(
+        "RockBLOCK: queueing binary message..."
+    );
+
+    bool result =
+        rbSendMessageAsync(
+            topic,
+            (const char*)data,
+            length
+        );
+
+    if (result)
+    {
+        sending_ = true;
+        sendComplete_ = false;
+        sendSuccess_ = false;
+
+        Serial.println(
+            "RockBLOCK: binary message queued"
+        );
+    }
+    else
+    {
+        Serial.println(
+            "RockBLOCK: binary queue failed"
+        );
+    }
+
+    return result;
+}
