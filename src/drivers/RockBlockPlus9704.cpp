@@ -100,7 +100,7 @@ bool RockBlockPlus9704::SendText(
     {
         sending_ = true;
         sendComplete_ = false;
-        sendSuccess_ = false;
+        sendSuccess_ = false; 
 
         Serial.println(
             "RockBLOCK: message queued"
@@ -116,7 +116,66 @@ bool RockBlockPlus9704::SendText(
     return result;
 }
 
-void RockBlockPlus9704::OnMessageComplete(
+
+bool RockBlockPlus9704::SendBinary(
+    uint16_t topic,
+    const uint8_t* data,
+    size_t length
+)
+{
+    Serial.println("RockBLOCK: SendBinary() called");
+
+    if (!initialized_)
+    {
+        return false;
+    }
+
+    if (sending_)
+    {
+        Serial.println(
+            "RockBLOCK: already sending"
+        );
+
+        return false;
+    }
+
+    if (data == nullptr || length == 0)
+    {
+        return false;
+    }
+
+    Serial.println(
+        "RockBLOCK: queueing binary message..."
+    );
+
+    bool result =
+        rbSendMessageAsync(
+            topic,
+            (const char*)data,
+            length
+        );
+
+    if (result)
+    {
+        sending_ = true;
+        sendComplete_ = false;
+        sendSuccess_ = false; 
+
+        Serial.println(
+            "RockBLOCK: binary message queued"
+        );
+    }
+    else
+    {
+        Serial.println(
+            "RockBLOCK: binary queue failed"
+        );
+    }
+
+    return result;
+}
+
+void RockBlockPlus9704::OnMessageComplete(  //TODO: Check who call this
     uint16_t id,
     rbMsgStatus_t status
 )
@@ -170,62 +229,4 @@ bool RockBlockPlus9704::IsSending() const
 bool RockBlockPlus9704::WasLastSendSuccessful() const
 {
     return lastSendSuccessful_;
-}
-
-bool RockBlockPlus9704::SendBinary(
-    uint16_t topic,
-    const uint8_t* data,
-    size_t length
-)
-{
-    Serial.println("RockBLOCK: SendBinary() called");
-
-    if (!initialized_)
-    {
-        return false;
-    }
-
-    if (sending_)
-    {
-        Serial.println(
-            "RockBLOCK: already sending"
-        );
-
-        return false;
-    }
-
-    if (data == nullptr || length == 0)
-    {
-        return false;
-    }
-
-    Serial.println(
-        "RockBLOCK: queueing binary message..."
-    );
-
-    bool result =
-        rbSendMessageAsync(
-            topic,
-            (const char*)data,
-            length
-        );
-
-    if (result)
-    {
-        sending_ = true;
-        sendComplete_ = false;
-        sendSuccess_ = false;
-
-        Serial.println(
-            "RockBLOCK: binary message queued"
-        );
-    }
-    else
-    {
-        Serial.println(
-            "RockBLOCK: binary queue failed"
-        );
-    }
-
-    return result;
 }

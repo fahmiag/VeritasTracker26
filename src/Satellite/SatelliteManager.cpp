@@ -4,7 +4,8 @@ SatelliteManager::SatelliteManager(
     RockBlockPlus9704& modem
 )
     : modem_(modem),
-      sequence_(0)
+      sequence_(0),
+      initialized_(false)
 {
 }
 
@@ -15,6 +16,12 @@ bool SatelliteManager::Begin()
 
 void SatelliteManager::Update()
 {
+    if (!initialized_)
+    {
+        return;
+    }
+
+    modem_.Update();
 }
 
 bool SatelliteManager::SendTelemetry(

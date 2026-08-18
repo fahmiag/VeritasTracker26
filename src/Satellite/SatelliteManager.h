@@ -35,6 +35,8 @@ private:
 
     RockBlockPlus9704& modem_;
 
+    bool initialized_;
+
     uint16_t sequence_;
 
     static constexpr uint16_t TELEMETRY_TOPIC = 1;

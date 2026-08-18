@@ -40,7 +40,9 @@ TODO:
 App::App()
     : sdLogger_(sdCard_),
       lastLogTime_(0),
-      satelliteManager_(rockBlock_)
+      satelliteManager_(rockBlock_),
+      lastTelemetryTime_(0),
+      telemetryStarted_(false)
 {
 }
 
@@ -307,10 +309,10 @@ void App::Run()
     // // -----------------------------------------
 
     
-    // buttons_.Update();
+    buttons_.Update();
 
-    // ButtonEvent buttonEvent =
-    //     buttons_.GetEvent();
+    ButtonEvent buttonEvent =
+        buttons_.GetEvent();
 
 
     // // -----------------------------------------
@@ -322,12 +324,27 @@ void App::Run()
     //     position
     // );
 
-    if (now - lastTelemetryTime_ >= TELEMETRY_INTERVAL_MS)
+    if (!telemetryStarted_)
     {
-        lastTelemetryTime_ = now;
+        if (position.valid)
+        {
+            Serial.println("Send First Telemetry");
+            SendTelemetry();
 
-        SendTelemetry();
-        Serial.println("SendTelemetry()");
+            telemetryStarted_ = true;
+            lastTelemetryTime_ = now;
+        }
+    }
+    else if (now - lastTelemetryTime_ >= TELEMETRY_INTERVAL_MS)
+    {
+        
+
+        Serial.println("SendTelemetry() 5minutes");
+        if (SendTelemetry())
+        {
+            lastTelemetryTime_ = now;
+        }
+        
     }
 
 
@@ -434,7 +451,7 @@ void App::Run()
      sdLogger_.Update();
 }
 
-void App::SendTelemetry()
+bool App::SendTelemetry()
 {
     if (!position.valid)
     {
@@ -442,7 +459,7 @@ void App::SendTelemetry()
             "[SAT] GPS position invalid"
         );
 
-        return;
+        return false;
     }
 
     TelemetryPacket packet{};
@@ -500,5 +517,5 @@ void App::SendTelemetry()
             heading.heading * 100.0
         );
 
-    satelliteManager_.SendTelemetry(packet);
+    return satelliteManager_.SendTelemetry(packet);
 }

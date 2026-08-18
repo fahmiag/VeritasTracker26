@@ -83,7 +83,8 @@ private:
     static constexpr uint32_t TELEMETRY_INTERVAL_MS =
         5UL * 60UL * 1000UL;
 
-    void SendTelemetry();
+    bool SendTelemetry();
+    bool telemetryStarted_;
 
     // GPSManager gps;
     // HeadingManager heading;

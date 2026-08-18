@@ -3,8 +3,10 @@
         "adafruit",
         "devkit",
         "espressif",
+        "Furuno",
         "hdop",
         "mikalhart",
-        "OLED"
+        "OLED",
+        "ROCKBLOCK"
     ]
 }
