@@ -307,27 +307,27 @@ void App::Run()
     // // -----------------------------------------
 
     
-    buttons_.Update();
+    // buttons_.Update();
 
-    ButtonEvent buttonEvent =
-        buttons_.GetEvent();
+    // ButtonEvent buttonEvent =
+    //     buttons_.GetEvent();
 
 
     // // -----------------------------------------
     // // OLED
     // // -----------------------------------------
 
-    display_.Update(
-        buttonEvent,
-        position
-    );
+    // display_.Update(
+    //     buttonEvent,
+    //     position
+    // );
 
     if (now - lastTelemetryTime_ >= TELEMETRY_INTERVAL_MS)
     {
         lastTelemetryTime_ = now;
 
         SendTelemetry();
-        Serial.println("SendTelemetry");
+        Serial.println("SendTelemetry()");
     }
 
 
@@ -401,30 +401,30 @@ void App::Run()
     // // Logging
     // // -----------------------------------------
 
-    // if (
-    //     now - lastLogTime_
-    //     >= LOG_INTERVAL_MS
-    // )
-    // {
-    //     lastLogTime_ = now;
+    if (
+        now - lastLogTime_
+        >= LOG_INTERVAL_MS
+    )
+    {
+        lastLogTime_ = now;
 
 
-    //     HeadingData heading;
+        HeadingData heading;
 
 
-    //     headingManager_.GetHeading(
-    //         heading
-    //     );
+        headingManager_.GetHeading(
+            heading
+        );
 
 
-    //     if (positionValid)
-    //     {
-    //         sdLogger_.LogNavigation(
-    //             position,
-    //             heading
-    //         );
-    //     }
-    // }
+        if (positionValid)
+        {
+            sdLogger_.LogNavigation(
+                position,
+                heading
+            );
+        }
+    }
 
 
     // // -----------------------------------------

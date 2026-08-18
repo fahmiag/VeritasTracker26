@@ -71,7 +71,7 @@ bool RockBlockPlus9704::SendText(
         return false;
     }
 
-    if (sending_)
+    if (sending_)  //TODO: check where sending_false
     {
         Serial.println(
             "RockBLOCK: already sending"
