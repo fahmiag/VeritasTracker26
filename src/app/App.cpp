@@ -319,32 +319,49 @@ void App::Run()
     // // OLED
     // // -----------------------------------------
 
-    // display_.Update(
-    //     buttonEvent,
-    //     position
-    // );
+    display_.Update(
+        buttonEvent,
+        position
+    );
 
     if (!telemetryStarted_)
     {
         if (position.valid)
         {
-            Serial.println("Send First Telemetry");
-            SendTelemetry();
+        if (SendTelemetry())
+        {
+            Serial.println(
+                "First telemetry queued successfully"
+            );
 
             telemetryStarted_ = true;
             lastTelemetryTime_ = now;
         }
+        else
+        {
+            Serial.println(
+                "First telemetry FAILED"
+            );
+        }
+        }
     }
     else if (now - lastTelemetryTime_ >= TELEMETRY_INTERVAL_MS)
     {
-        
+        Serial.println(
+            "5-minute telemetry interval reached");
 
-        Serial.println("SendTelemetry() 5minutes");
         if (SendTelemetry())
         {
+            Serial.println(
+                "SendTelemetry() 5 minutes success");
+
             lastTelemetryTime_ = now;
         }
-        
+        else
+        {
+            Serial.println(
+                "SendTelemetry() 5 minutes FAILED");
+        }
     }
 
 

@@ -4,7 +4,6 @@ SatelliteManager::SatelliteManager(
     RockBlockPlus9704& modem
 )
     : modem_(modem),
-      sequence_(0),
       initialized_(false)
 {
 }
@@ -28,10 +27,18 @@ bool SatelliteManager::SendTelemetry(
     const TelemetryPacket& packet
 )
 {
+
+    Serial.println("[SAT] SendTelemetry() entered");
+
+
     if (modem_.IsSending())
     {
+        Serial.println("[SAT] ERROR: RockBLOCK still sending");
+
         return false;
     }
+
+    Serial.println("[SAT] RockBLOCK ready for new message");
 
     TelemetryPacket txPacket = packet;
 
@@ -47,6 +54,7 @@ bool SatelliteManager::SendTelemetry(
 
     if (length == 0)
     {
+        Serial.println("[SAT] ERROR: encoding failed");
         return false;
     }
 
@@ -78,11 +86,29 @@ bool SatelliteManager::SendTelemetry(
     //     payloadHex_
     // );
 
-    return modem_.SendBinary(
+    Serial.println();
+
+    bool result = modem_.SendBinary(
         RAW_TOPIC, //this is important
         buffer,
         length
     );
+
+
+    if (result)
+    {
+        Serial.println(
+            "[SAT] Binary message queued"
+        );
+    }
+    else
+    {
+        Serial.println(
+            "[SAT] Binary message FAILED"
+        );
+    }
+
+    return result;
 }
 
 bool SatelliteManager::IsBusy() const
