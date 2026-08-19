@@ -219,45 +219,12 @@ void App::Begin()
     Serial.println("==============================");
 
 
-    // -----------------------------------------
-    // SD card test
-    // -----------------------------------------
-
-    /*
-     * Temporary SD card test.
-     *
-     * Can remove this after SD card
-     * hardware has been verified.
-     */
-
-    if (sdCard_.IsReady())
-    {
-        Serial.println();
-        Serial.println("SD TEST");
-
-
-        sdCard_.WriteFile(
-            "/test.txt",
-            "Hello from ESP32\n"
-        );
-
-
-        sdCard_.AppendFile(
-            "/test.txt",
-            "SD card is working\n"
-        );
-
-
-        sdCard_.ReadFile(
-            "/test.txt"
-        );
-    }
 }
 
 
-// =====================================================
+// ##############################################################
 // Run
-// =====================================================
+// ##############################################################
 
 void App::Run()
 {
@@ -266,9 +233,6 @@ void App::Run()
     // -----------------------------------------
 
     uint32_t now = millis();
-
-    rockBlock_.Update();
-    satelliteManager_.Update();
 
 
     // // -----------------------------------------
@@ -347,8 +311,7 @@ void App::Run()
     }
     else if (now - lastTelemetryTime_ >= TELEMETRY_INTERVAL_MS)
     {
-        Serial.println(
-            "5-minute telemetry interval reached");
+        Serial.println("/n5-minute telemetry interval reached");
 
         if (SendTelemetry())
         {
@@ -466,6 +429,11 @@ void App::Run()
     // // -----------------------------------------
 
      sdLogger_.Update();
+
+     
+    //put this at the bottom so that log and create file first
+    rockBlock_.Update();
+    satelliteManager_.Update();
 }
 
 bool App::SendTelemetry()

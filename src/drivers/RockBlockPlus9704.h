@@ -20,16 +20,23 @@ public:
         const char* message
     );
 
+    bool SendBinary(
+        uint16_t topic,
+        const uint8_t* data,
+        size_t length
+    );
+
     bool IsReady() const;
 
     bool IsSending() const;
 
     bool WasLastSendSuccessful() const;
 
-    bool SendBinary(
-        uint16_t topic,
-        const uint8_t* data,
-        size_t length
+    
+
+    static void OnMessageComplete(
+        uint16_t id,
+        rbMsgStatus_t status
     );
 
 private:
@@ -45,10 +52,7 @@ private:
 
     static RockBlockPlus9704* instance_;
 
-    static void OnMessageComplete(
-        uint16_t id,
-        rbMsgStatus_t status
-    );
+    static rbCallbacks_t callbacks_;
 
     static constexpr uint32_t BAUD_RATE = 230400;
 };

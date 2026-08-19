@@ -5,6 +5,20 @@
 RockBlockPlus9704*
 RockBlockPlus9704::instance_ = nullptr;
 
+static rbCallbacks_t rockBlockCallbacks =
+{
+    nullptr,
+    RockBlockPlus9704::OnMessageComplete,
+    nullptr,
+    nullptr,
+    nullptr
+};
+/*  callbacks_[0] → messageProvisioning
+    callbacks_[1] → moMessageComplete
+    callbacks_[2] → mtMessageComplete
+    callbacks_[3] → constellationState
+    callbacks_[4] → moMessageStarted
+*/
 
 RockBlockPlus9704::RockBlockPlus9704()
     : serial_(1),
@@ -18,9 +32,7 @@ RockBlockPlus9704::RockBlockPlus9704()
 
 bool RockBlockPlus9704::Begin()
 {
-    Serial.println(
-        "RockBLOCK: starting..."
-    );
+    Serial.println("RockBLOCK: starting...");
 
     serial_.begin(
         BAUD_RATE,
@@ -33,14 +45,17 @@ bool RockBlockPlus9704::Begin()
 
     if (!rbBegin(serial_))
     {
-        Serial.println(
-            "RockBLOCK: rbBegin failed"
-        );
+        Serial.println("RockBLOCK: rbBegin failed");
 
         initialized_ = false;
 
         return false;
     }
+
+    // Register RockBLOCK library callbacks
+    rbRegisterCallbacks(
+        &callbacks_
+    );
 
     initialized_ = true;
 
@@ -127,20 +142,20 @@ bool RockBlockPlus9704::SendBinary(
 
     if (!initialized_)
     {
+        Serial.println("RockBLOCK: Not Initialize");
         return false;
     }
 
     if (sending_)
     {
-        Serial.println(
-            "RockBLOCK: already sending"
-        );
+        Serial.println("RockBLOCK: already sending");
 
         return false;
     }
 
     if (data == nullptr || length == 0)
     {
+        Serial.println("RockBLOCK: No Data");
         return false;
     }
 
@@ -161,15 +176,11 @@ bool RockBlockPlus9704::SendBinary(
         sendComplete_ = false;
         sendSuccess_ = false; 
 
-        Serial.println(
-            "RockBLOCK: binary message queued"
-        );
+        Serial.println("RockBLOCK: binary message queued");
     }
     else
     {
-        Serial.println(
-            "RockBLOCK: binary queue failed"
-        );
+        Serial.println("RockBLOCK: binary queue failed" );
     }
 
     return result;
