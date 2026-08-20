@@ -32,7 +32,7 @@ public:
 
     bool WasLastSendSuccessful() const;
 
-    
+    static rbCallbacks_t callbacks_;
 
     static void OnMessageComplete(
         uint16_t id,
@@ -52,7 +52,7 @@ private:
 
     static RockBlockPlus9704* instance_;
 
-    static rbCallbacks_t callbacks_;
+    
 
     static constexpr uint32_t BAUD_RATE = 230400;
 };

@@ -5,7 +5,7 @@
 RockBlockPlus9704*
 RockBlockPlus9704::instance_ = nullptr;
 
-static rbCallbacks_t rockBlockCallbacks =
+rbCallbacks_t RockBlockPlus9704::callbacks_ =
 {
     nullptr,
     RockBlockPlus9704::OnMessageComplete,
