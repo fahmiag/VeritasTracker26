@@ -12,6 +12,7 @@ namespace Config
     constexpr uint32_t BUTTON_LONG_PRESS_MS = 1000;
 
     constexpr uint32_t OLED_TIMEOUT_MS = 60000; //60000ms = 1minutes
+    constexpr uint32_t OLED_UPDATE_MS = 1000; 
 
     //LED Status
     static constexpr uint32_t NORMAL_ON_MS  = 1000;

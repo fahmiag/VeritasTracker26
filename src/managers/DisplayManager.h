@@ -60,6 +60,7 @@ private:
     bool displayActive_ = true;
 
     uint32_t lastActivityTime_ = 0;
+    uint32_t lastDisplayUpdate_ = 0;
 
       // Current GPS position
    // PositionData position_;
@@ -82,6 +83,8 @@ private:
     void DrawSatelliteStatus();
     void DrawSDStatus();
     void DrawSettings();
+    
+    void UpdateDisplay();
 
     // ---------------------------------
     // Menu navigation
@@ -100,6 +103,8 @@ private:
 
     void ResetActivityTimer();
     void CheckDisplayTimeout();
+
+    
 
 
 

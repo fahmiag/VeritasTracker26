@@ -47,6 +47,7 @@ void DisplayManager::Update(
     // Check OLED timeout
     // -----------------------------------------
     CheckDisplayTimeout();
+    UpdateDisplay();
 
     // -----------------------------------------
     // No button event
@@ -55,6 +56,9 @@ void DisplayManager::Update(
     {
         return;
     }
+
+    
+
 
     // -----------------------------------------
     // OLED currently OFF
@@ -83,10 +87,29 @@ void DisplayManager::Update(
 
     ResetActivityTimer();
 
-
+    
     HandleEvent(event);
 }
 
+
+
+
+void DisplayManager::UpdateDisplay()
+{
+
+    uint32_t now =
+        millis();
+
+
+    if (
+        (now - lastDisplayUpdate_) >=
+        Config::OLED_UPDATE_MS
+    )
+    {
+        lastDisplayUpdate_=now;
+        DrawScreen();
+    }
+}
 
 // =====================================================
 // Activity Timer
@@ -338,7 +361,7 @@ void DisplayManager::DrawScreen()
     oled_.Clear();
 
 
-    switch (currentScreen_)
+    switch (currentScreen_) 
     {
         case DisplayScreen::MAIN:
 
@@ -400,7 +423,7 @@ void DisplayManager::DrawScreen()
 
 void DisplayManager::DrawMainScreen()
 {
-    oled_.DrawText(0, 0, "GPS TRACKER");
+    oled_.DrawText(0, 0, "VERITAS TRACKER");
     oled_.DrawLine(0, 10, 127, 10);
 
     // -----------------------------------------
