@@ -21,7 +21,10 @@ namespace Config
 
     constexpr uint8_t TELEMETRY_VERSION = 1;
     constexpr uint8_t TELEMETRY_TYPE_POSITION = 1;
-    static constexpr uint8_t PACKET_SIZE = 19;
+
+    //static constexpr uint32_t TELEMETRY_INTERVAL_MS = 5UL * 60UL * 1000UL;
+    //static constexpr uint32_t TELEMETRY_TIMEOUT_MS = 10UL * 60UL * 1000UL;
+    
 
     //constexpr uint32_t SATELLITE_INTERVAL_MS = 60000;
 

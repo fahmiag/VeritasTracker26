@@ -4,6 +4,7 @@
 #include <HardwareSerial.h>
 
 #include "rockblock_9704.h"
+#include "../config/PinMap.h"
 
 class RockBlockPlus9704
 {
@@ -32,6 +33,8 @@ public:
 
     bool WasLastSendSuccessful() const;
 
+    void TimeOutReset();
+
     static rbCallbacks_t callbacks_;
 
     static void OnMessageComplete(
@@ -51,6 +54,8 @@ private:
     bool lastSendSuccessful_;
 
     static RockBlockPlus9704* instance_;
+
+    uint32_t sendStartTime_;
 
     
 

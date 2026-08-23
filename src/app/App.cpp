@@ -300,6 +300,7 @@ void App::Run()
 
             telemetryStarted_ = true;
             lastTelemetryTime_ = now;
+            timeOutReset_ = false;
         }
         else
         {
@@ -311,7 +312,7 @@ void App::Run()
     }
     else if (now - lastTelemetryTime_ >= TELEMETRY_INTERVAL_MS)
     {
-        Serial.println("/n5-minute telemetry interval reached");
+        Serial.println("\n5-minute telemetry interval reached");
 
         if (SendTelemetry())
         {
@@ -325,6 +326,12 @@ void App::Run()
             Serial.println(
                 "SendTelemetry() 5 minutes FAILED");
         }
+    }
+    else if (timeOutReset_ && (now - lastTelemetryTime_ >= TELEMETRY_TIMEOUT_MS))
+    {
+        rockBlock_.TimeOutReset();
+        
+        timeOutReset_ = true;
     }
 
 

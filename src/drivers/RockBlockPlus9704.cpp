@@ -1,6 +1,6 @@
 #include "RockBlockPlus9704.h"
 
-#include "../config/PinMap.h"
+
 
 RockBlockPlus9704*
 RockBlockPlus9704::instance_ = nullptr;
@@ -27,6 +27,8 @@ RockBlockPlus9704::RockBlockPlus9704()
       sendComplete_(false),
       sendSuccess_(false),
       lastSendSuccessful_(false)
+      
+
 {
 }
 
@@ -72,8 +74,17 @@ void RockBlockPlus9704::Update()
     {
         return;
     }
-
+    
     rbPoll();
+}
+
+void RockBlockPlus9704::TimeOutReset()
+{
+    sending_ = false;
+    lastSendSuccessful_ = false;
+    Serial.println("RockBLOCK: send timed out, resetting");
+
+    
 }
 
 bool RockBlockPlus9704::SendText(
@@ -177,6 +188,8 @@ bool RockBlockPlus9704::SendBinary(
         sendSuccess_ = false; 
 
         Serial.println("RockBLOCK: binary message queued");
+
+        sendStartTime_ = millis();
     }
     else
     {
