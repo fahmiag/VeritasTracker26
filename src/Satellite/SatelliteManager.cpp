@@ -44,23 +44,28 @@ bool SatelliteManager::SendTelemetry(
 
    // txPacket.sequence = sequence_++;
 
-    uint8_t buffer[32];
+    uint8_t buffer[TelemetryEncoder::PACKET_SIZE];
 
-    uint8_t length =
+    bool encoded =
         TelemetryEncoder::Encode(
             txPacket,
-            buffer
+            buffer,
+            sizeof(buffer)
         );
 
-    if (length == 0)
+    if (!encoded)
     {
         Serial.println("[SAT] ERROR: encoding failed");
         return false;
     }
 
+    // -------------------------------------------------
+    // Convert binary payload to HEX for debugging
+    // -------------------------------------------------
+
     char* ptr = payloadHex_;
 
-    for (uint8_t i = 0; i < length; i++)
+    for (uint8_t i = 0; i < TelemetryEncoder::PACKET_SIZE; i++)
     {
         sprintf(
             ptr,
@@ -80,18 +85,23 @@ bool SatelliteManager::SendTelemetry(
     Serial.println(
         payloadHex_
     );
+     Serial.println();
 
     // return modem_.SendText(
     //     TELEMETRY_TOPIC,
     //     payloadHex_
     // );
 
-    Serial.println();
+    // -------------------------------------------------
+    // Send binary packet
+    // -------------------------------------------------
+
+   
 
     bool result = modem_.SendBinary(
         RAW_TOPIC, //this is important
         buffer,
-        length
+        TelemetryEncoder::PACKET_SIZE
     );
 
 

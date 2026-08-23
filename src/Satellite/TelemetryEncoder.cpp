@@ -1,105 +1,148 @@
+
 #include "TelemetryEncoder.h"
 
-uint8_t TelemetryEncoder::Encode(
+namespace
+{
+    // Byte 3:
+    // Bits 0-1 = GPS source
+    // Bits 2-7 = reserved
+    constexpr uint8_t GPS_SOURCE_MASK = 0x03;
+
+    void WriteUint16LE(
+        uint8_t* buffer,
+        size_t& index,
+        uint16_t value)
+    {
+        buffer[index++] = static_cast<uint8_t>(value & 0xFF);
+        buffer[index++] = static_cast<uint8_t>((value >> 8) & 0xFF);
+    }
+
+    void WriteUint32LE(
+        uint8_t* buffer,
+        size_t& index,
+        uint32_t value)
+    {
+        buffer[index++] = static_cast<uint8_t>(value & 0xFF);
+        buffer[index++] = static_cast<uint8_t>((value >> 8) & 0xFF);
+        buffer[index++] = static_cast<uint8_t>((value >> 16) & 0xFF);
+        buffer[index++] = static_cast<uint8_t>((value >> 24) & 0xFF);
+    }
+
+    void WriteInt32LE(
+        uint8_t* buffer,
+        size_t& index,
+        int32_t value)
+    {
+        WriteUint32LE(
+            buffer,
+            index,
+            static_cast<uint32_t>(value)
+        );
+    }
+}
+
+bool TelemetryEncoder::Encode(
     const TelemetryPacket& packet,
-    uint8_t* buffer)
+    uint8_t* buffer,
+    size_t bufferSize)
 {
     if (buffer == nullptr)
     {
-        return 0;
+        return false;
     }
 
-    uint8_t index = 0;
+    if (bufferSize < PACKET_SIZE)
+    {
+        return false;
+    }
 
-    // ----------------------------------------
-    // Version
-    // ----------------------------------------
+    size_t index = 0;
 
-    buffer[index++] =
-        packet.version;
+    // Byte 0: Version
+    buffer[index++] = packet.version;
 
-    // ----------------------------------------
-    // Type
-    // ----------------------------------------
+    // Byte 1: Message type
+    buffer[index++] = static_cast<uint8_t>(packet.type);
 
-    buffer[index++] =
-        packet.type;
+    // Byte 2: Flags
+    buffer[index++] = packet.flags;
 
-    // ----------------------------------------
-    // Flags
-    // ----------------------------------------
+    // Byte 3: Source
+    //
+    // Bits 0-1 = GPS source
+    // Bits 2-7 = reserved and forced to zero
+    //
+    uint8_t source =
+        static_cast<uint8_t>(packet.gpsSource)
+        & GPS_SOURCE_MASK;
 
-    buffer[index++] =
-        packet.flags;
+    buffer[index++] = source;
 
-    // ----------------------------------------
-    // Timestamp - uint32_t
-    // Big endian
-    // ----------------------------------------
+    // Byte 4-5: Sequence
+    WriteUint16LE(
+        buffer,
+        index,
+        packet.sequence
+    );
 
-    buffer[index++] =
-        (packet.timestamp >> 24) & 0xFF;
+    // Byte 6-9: Timestamp
+    WriteUint32LE(
+        buffer,
+        index,
+        packet.timestamp
+    );
 
-    buffer[index++] =
-        (packet.timestamp >> 16) & 0xFF;
+    // Byte 10-13: Latitude
+    WriteInt32LE(
+        buffer,
+        index,
+        packet.latitude
+    );
 
-    buffer[index++] =
-        (packet.timestamp >> 8) & 0xFF;
+    // Byte 14-17: Longitude
+    WriteInt32LE(
+        buffer,
+        index,
+        packet.longitude
+    );
 
-    buffer[index++] =
-        packet.timestamp & 0xFF;
+    // Byte 18-19: COG
+    WriteUint16LE(
+        buffer,
+        index,
+        packet.cog
+    );
 
-    // ----------------------------------------
-    // Latitude - int32_t
-    // ----------------------------------------
+    // Byte 20-21: Heading
+    WriteUint16LE(
+        buffer,
+        index,
+        packet.heading
+    );
 
-    buffer[index++] =
-        (packet.latitude >> 24) & 0xFF;
-
-    buffer[index++] =
-        (packet.latitude >> 16) & 0xFF;
-
-    buffer[index++] =
-        (packet.latitude >> 8) & 0xFF;
-
-    buffer[index++] =
-        packet.latitude & 0xFF;
-
-    // ----------------------------------------
-    // Longitude - int32_t
-    // ----------------------------------------
-
-    buffer[index++] =
-        (packet.longitude >> 24) & 0xFF;
-
-    buffer[index++] =
-        (packet.longitude >> 16) & 0xFF;
-
-    buffer[index++] =
-        (packet.longitude >> 8) & 0xFF;
-
-    buffer[index++] =
-        packet.longitude & 0xFF;
-
-    // ----------------------------------------
-    // COG - uint16_t
-    // ----------------------------------------
-
-    buffer[index++] =
-        (packet.cog >> 8) & 0xFF;
-
-    buffer[index++] =
-        packet.cog & 0xFF;
-
-    // ----------------------------------------
-    // Heading - uint16_t
-    // ----------------------------------------
-
-    buffer[index++] =
-        (packet.heading >> 8) & 0xFF;
-
-    buffer[index++] =
-        packet.heading & 0xFF;
-
-    return index;
+    return index == PACKET_SIZE;
 }
+/*
+Byte   Size   Field
+--------------------------------
+0      1      Version
+1      1      Type
+2      1      Flags
+3      1      GPS Source
+4-5    2      Sequence
+6-9    4      Timestamp
+10-13  4      Latitude
+14-17  4      Longitude
+18-19  2      COG
+20-21  2      Heading
+--------------------------------
+       22     bytes total
+
+Scaling
+--------------------------------
+Latitude  = degrees × 10,000,000
+Longitude = degrees × 10,000,000
+
+COG       = degrees × 100
+Heading   = degrees × 100
+*/

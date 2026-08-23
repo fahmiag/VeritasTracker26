@@ -1,15 +1,19 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
+
 #include "TelemetryPacket.h"
 
 class TelemetryEncoder
 {
 public:
-    static constexpr uint8_t PACKET_SIZE = 15;
 
-    static uint8_t Encode(
+    static constexpr size_t PACKET_SIZE = 22;
+
+    static bool Encode(
         const TelemetryPacket& packet,
-        uint8_t* buffer
+        uint8_t* buffer,
+        size_t bufferSize
     );
 };

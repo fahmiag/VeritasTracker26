@@ -11,12 +11,12 @@ TODO:
 [ ] SCX20 CAN
 [ ] GPSManager source selection
 [ ] Navigation/Heading data structure
-[ ] RockBLOCK satellite communication
+[x] RockBLOCK satellite communication
 [ ] Main system state machine
 
 [x] Test Create new file every day
-[ ] Pack Data
-[ ] Send data over-the-air
+[x] Pack Data
+[x] Send data over-the-air
 [ ] Read Heading from Furuno
 [ ] Read GPS from Furuno
 [ ] Add Buzzer to indicate Error
@@ -451,11 +451,10 @@ bool App::SendTelemetry()
 
     packet.version =
         Telemetry::VERSION;
-
+ 
     packet.type =
-        static_cast<uint8_t>(
-            Telemetry::Type::POSITION
-        );
+            Telemetry::Type::POSITION;
+   
 
     packet.flags =
         Telemetry::NONE;
