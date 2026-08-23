@@ -20,6 +20,7 @@
 #include "../utils/TimeUtils.h"
 // Services
 #include "../services/SDLogger.h"
+#include <Arduino.h>
 
 //App coordinates modules but doesn't implement hardware details.
 //App never talks directly to hardware.

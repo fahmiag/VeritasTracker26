@@ -61,15 +61,15 @@ bool TelemetryEncoder::Encode(
 
     // Byte 0: Version
     buffer[index++] = packet.version;
-    Serial.println(packet.version);
+    //Serial.println(packet.version);
 
     // Byte 1: Message type
     buffer[index++] = static_cast<uint8_t>(packet.type);
-    Serial.println(static_cast<uint8_t>(packet.type));
+    //Serial.println(static_cast<uint8_t>(packet.type));
 
     // Byte 2: Flags
     buffer[index++] = packet.flags;
-     Serial.println(packet.flags);
+    //Serial.println(packet.flags);
 
     // Byte 3: Source
     //

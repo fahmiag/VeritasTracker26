@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 
 import struct
+from datetime import datetime, timezone,  timedelta
 
-
+#test data : 
+# 0101010000005EAC8A6ACDADC40117DBAB3C00000000
+# 010101000000A5748A6AE8AEC40190DAAB3C00000000
+# 0101010000007A738A6AE0AEC4018ED9AB3C00000000
+# 0101010000004D738A6A8AAFC4019DDAAB3C00000000
 PACKET_SIZE = 22
 
 GPS_SOURCES = {
@@ -166,6 +171,18 @@ def decode_packet(hex_string):
 
     print(f"COG             : {cog:.2f}°")
     print(f"Heading         : {heading:.2f}°")
+
+    print("================================")
+    # 1. Convert to a UTC datetime object
+    dt_utc = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+    #print("UTC Datetime:", dt_utc)
+    formatted_date = dt_utc.strftime('%Y-%m-%d %H:%M:%S')
+    print("Formatted Date:", formatted_date)
+
+    my_timezone = timezone(timedelta(hours=8))
+    dt_malaysia = datetime.fromtimestamp(timestamp, tz=my_timezone)
+
+    print("Malaysia Time:", dt_malaysia.strftime('%Y-%m-%d %H:%M:%S'))
 
     print("================================")
     print()

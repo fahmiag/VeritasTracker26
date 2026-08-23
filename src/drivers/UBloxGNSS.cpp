@@ -22,6 +22,27 @@ bool UBloxGNSS::Begin()
 
     position_.source = PositionSource::UBLOX;
 
+    Serial.print("Position Source");
+    switch (position_.source)
+    {
+        case PositionSource::NONE:
+            Serial.println("NONE");
+            break;
+
+        case PositionSource::UBLOX:
+            Serial.println("UBLOX");
+            break;
+
+        case PositionSource::SCX20:
+            Serial.println("SCX20");
+            break;
+
+        default:
+            Serial.println("UNKNOWN");
+            break;
+    }
+
+
     return true;
 }
 
