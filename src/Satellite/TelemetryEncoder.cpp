@@ -1,5 +1,6 @@
 
 #include "TelemetryEncoder.h"
+#include <Arduino.h>
 
 namespace
 {
@@ -60,12 +61,15 @@ bool TelemetryEncoder::Encode(
 
     // Byte 0: Version
     buffer[index++] = packet.version;
+    Serial.println(packet.version);
 
     // Byte 1: Message type
     buffer[index++] = static_cast<uint8_t>(packet.type);
+    Serial.println(static_cast<uint8_t>(packet.type));
 
     // Byte 2: Flags
     buffer[index++] = packet.flags;
+     Serial.println(packet.flags);
 
     // Byte 3: Source
     //
@@ -77,6 +81,7 @@ bool TelemetryEncoder::Encode(
         & GPS_SOURCE_MASK;
 
     buffer[index++] = source;
+    Serial.println(source);
 
     // Byte 4-5: Sequence
     WriteUint16LE(
@@ -84,6 +89,8 @@ bool TelemetryEncoder::Encode(
         index,
         packet.sequence
     );
+    
+    Serial.println(packet.sequence);
 
     // Byte 6-9: Timestamp
     WriteUint32LE(
@@ -91,6 +98,7 @@ bool TelemetryEncoder::Encode(
         index,
         packet.timestamp
     );
+    Serial.println(packet.timestamp);
 
     // Byte 10-13: Latitude
     WriteInt32LE(
@@ -98,6 +106,8 @@ bool TelemetryEncoder::Encode(
         index,
         packet.latitude
     );
+    
+    Serial.println(packet.latitude);
 
     // Byte 14-17: Longitude
     WriteInt32LE(
@@ -105,6 +115,7 @@ bool TelemetryEncoder::Encode(
         index,
         packet.longitude
     );
+    Serial.println(packet.longitude);
 
     // Byte 18-19: COG
     WriteUint16LE(
