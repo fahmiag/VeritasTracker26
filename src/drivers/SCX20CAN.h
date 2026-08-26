@@ -1,7 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
-#include <driver/twai.h>
+#include <SPI.h>
+#include "../lib/MCP_CAN/mcp_can.h"
 
 #include "../data/PositionData.h"
 #include "../data/HeadingData.h"
@@ -10,27 +11,52 @@ class SCX20CAN
 {
 public:
 
+    SCX20CAN();
+
     bool Begin();
 
     void Update();
 
-    bool GetPosition(PositionData& position);
+    bool GetPosition(
+        PositionData& position
+    );
 
-    bool GetHeading(HeadingData& heading);
+    bool GetHeading(
+        HeadingData& heading
+    );
 
 private:
+
+    static constexpr uint8_t CS_PIN = 5;
+
+    MCP_CAN can_;
 
     PositionData position_;
 
     HeadingData heading_;
 
-    void ProcessMessage(const twai_message_t& message);
+    void ProcessMessage(
+        uint32_t canId,
+        uint8_t* data,
+        uint8_t length
+    );
 
-    void ParseVesselHeading(const twai_message_t& message);
+    void ParseVesselHeading(
+        uint8_t* data,
+        uint8_t length
+    );
 
-    void ParsePositionRapidUpdate(const twai_message_t& message);
+    void ParsePositionRapidUpdate(
+        uint8_t* data,
+        uint8_t length
+    );
 
-    void ParseCOGSOG(const twai_message_t& message);
+    void ParseCOGSOG(
+        uint8_t* data,
+        uint8_t length
+    );
 
-    uint32_t ExtractPGN(uint32_t canId);
+    uint32_t ExtractPGN(
+        uint32_t canId
+    );
 };

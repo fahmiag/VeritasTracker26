@@ -34,13 +34,7 @@ namespace PinMap
     constexpr uint8_t ROCKBLOCK_RX = 33;
     constexpr uint8_t ROCKBLOCK_TX = 32;
 
-    // ------------------------------------------------
-    // SCX-20 CAN
-    // -----------------------------------------------
-    //this code use ESP32 direct pin.  from previous test using arduino IDE, this is not working
-    //so I use external driver IC. That why this not working.
-    constexpr uint8_t SCX20_CAN_RX = 3;
-    constexpr uint8_t SCX20_CAN_TX = 5;
+
 
      // -----------------------------
     // SD Card - SPI

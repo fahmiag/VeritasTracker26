@@ -4,7 +4,8 @@ SatelliteManager::SatelliteManager(
     RockBlockPlus9704& modem
 )
     : modem_(modem),
-      initialized_(false)
+      initialized_(false),
+      sequence_(0)
 {
 }
 
@@ -42,9 +43,12 @@ bool SatelliteManager::SendTelemetry(
 
     TelemetryPacket txPacket = packet;
 
-   // txPacket.sequence = sequence_++;
+    txPacket.sequence = sequence_++;
+    Serial.print("[SAT] Sequence: ");
+    Serial.println(txPacket.sequence);
 
     uint8_t buffer[TelemetryEncoder::PACKET_SIZE];
+
 
     bool encoded =
         TelemetryEncoder::Encode(
@@ -78,14 +82,9 @@ bool SatelliteManager::SendTelemetry(
 
     *ptr = '\0';
 
-    Serial.print(
-        "[SAT] Payload HEX: "
-    );
-
-    Serial.println(
-        payloadHex_
-    );
-     Serial.println();
+    Serial.print("[SAT] Payload HEX: ");
+    Serial.println(payloadHex_);
+    Serial.println();
 
     // return modem_.SendText(
     //     TELEMETRY_TOPIC,

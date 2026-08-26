@@ -4,16 +4,17 @@
 
 enum class PositionSource : uint8_t
 {
-    NONE = 0,
+    NONE,
     UBLOX,
     SCX20
 };
+
 
 struct PositionData
 {
     bool valid = false;
 
-    PositionSource source = PositionSource::NONE;
+    PositionSource source = PositionSource::UBLOX;
 
     // UTC date/time from GPS
     uint16_t year = 0;

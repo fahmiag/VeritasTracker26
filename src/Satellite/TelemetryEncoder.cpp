@@ -81,6 +81,7 @@ bool TelemetryEncoder::Encode(
         & GPS_SOURCE_MASK;
 
     buffer[index++] = source;
+    Serial.print(" source ");
     Serial.println(source);
 
     // Byte 4-5: Sequence
@@ -90,6 +91,7 @@ bool TelemetryEncoder::Encode(
         packet.sequence
     );
     
+    Serial.print(" Sequence ");
     Serial.println(packet.sequence);
 
     // Byte 6-9: Timestamp
@@ -98,7 +100,7 @@ bool TelemetryEncoder::Encode(
         index,
         packet.timestamp
     );
-    Serial.println(packet.timestamp);
+   // Serial.println(packet.timestamp);
 
     // Byte 10-13: Latitude
     WriteInt32LE(
@@ -107,7 +109,7 @@ bool TelemetryEncoder::Encode(
         packet.latitude
     );
     
-    Serial.println(packet.latitude);
+    //Serial.println(packet.latitude);
 
     // Byte 14-17: Longitude
     WriteInt32LE(
@@ -115,7 +117,7 @@ bool TelemetryEncoder::Encode(
         index,
         packet.longitude
     );
-    Serial.println(packet.longitude);
+   // Serial.println(packet.longitude);
 
     // Byte 18-19: COG
     WriteUint16LE(
