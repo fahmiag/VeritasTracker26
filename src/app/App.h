@@ -33,6 +33,7 @@ public:
 
     void Begin();
     void Run();
+    void Update(); //test code
 
 private:
 
@@ -46,7 +47,7 @@ private:
     SatelliteManager satelliteManager_;
 
    // UBloxGNSS ublox_;
-    SCX20CAN scx20CAN_;
+    SCX20CAN scx20_;
     SDCard sdCard_;
 
     // -----------------------------
