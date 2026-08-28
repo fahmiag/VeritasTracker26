@@ -1,8 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <SPI.h>
-#include "../lib/MCP_CAN/mcp_can.h"
+#include "mcp_can.h"
 
 #include "../data/PositionData.h"
 #include "../data/HeadingData.h"
@@ -17,44 +16,74 @@ public:
 
     void Update();
 
-    bool GetPosition(
-        PositionData& position
-    );
+    bool GetPosition(PositionData& position);
 
-    bool GetHeading(
-        HeadingData& heading
-    );
+    bool GetHeading(HeadingData& heading);
 
 private:
 
-    static constexpr uint8_t CS_PIN = 5;
+    // -------------------------------------------------
+    // CAN
+    // -------------------------------------------------
 
     MCP_CAN can_;
+
+    // -------------------------------------------------
+    // Parsed data
+    // -------------------------------------------------
 
     PositionData position_;
 
     HeadingData heading_;
 
+    // -------------------------------------------------
+    // PGN processing
+    // -------------------------------------------------
+
     void ProcessMessage(
         uint32_t canId,
-        uint8_t* data,
-        uint8_t length
+        uint8_t len,
+        uint8_t* data
     );
 
-    void ParseVesselHeading(
-        uint8_t* data,
-        uint8_t length
+    void Process129029(
+        uint8_t len,
+        uint8_t* data
     );
 
-    void ParsePositionRapidUpdate(
-        uint8_t* data,
-        uint8_t length
+    // -------------------------------------------------
+    // 129029 Fast Packet
+    // -------------------------------------------------
+
+    static constexpr uint8_t FAST_PACKET_BUFFER_SIZE = 64;
+
+    struct FastPacketBuffer
+    {
+        bool active;
+
+        uint8_t sequence;
+
+        uint8_t expectedLength;
+
+        uint8_t receivedLength;
+
+        uint8_t nextFrame;
+
+        uint8_t data[FAST_PACKET_BUFFER_SIZE];
+    };
+
+    FastPacketBuffer gnssPacket_;
+
+    void ResetFastPacket();
+
+    bool ProcessFastPacket(
+        uint8_t len,
+        uint8_t* data
     );
 
-    void ParseCOGSOG(
-        uint8_t* data,
-        uint8_t length
-    );
+    // -------------------------------------------------
+    // Helpers
+    // -------------------------------------------------
 
     uint32_t ExtractPGN(
         uint32_t canId

@@ -43,6 +43,9 @@ namespace PinMap
     constexpr uint8_t SD_MISO = 19;
     constexpr uint8_t SD_MOSI = 23;
     constexpr uint8_t SD_CS   = 4;
+
+    
+    constexpr uint8_t SCX20_CAN_CS   = 5;
     
 
 

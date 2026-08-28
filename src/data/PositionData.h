@@ -25,6 +25,9 @@ struct PositionData
     uint8_t minute = 0;
     uint8_t second = 0;
 
+    //UNIX Which Source provide direct timestamp
+    uint32_t timestamp = 0;
+
     // Position
     double latitude = 0.0;
     double longitude = 0.0;
