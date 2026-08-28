@@ -345,6 +345,18 @@ void SCX20CAN::Parse129026(
     Serial.println(
         "============================"
     );
+
+    if (cogRaw != 0xFFFF)
+    {
+        position_.course =
+            cogRaw * 0.0001 * 180.0 / PI;
+    }
+
+    if (sogRaw != 0xFFFF)
+    {
+        position_.speed =
+            sogRaw * 0.01 * 1.943844;
+    }
 }
 
 //Heading
@@ -789,7 +801,7 @@ void SCX20CAN::Process129029(
 // Get Position
 // =====================================================
 
-bool SCX20CAN::GetPosition(
+bool SCX20CAN::GetPosition(  //TODO: Check if this function used?
     PositionData& position
 )
 {
@@ -812,10 +824,7 @@ bool SCX20CAN::GetHeading(
     return heading_.valid;
 }
 
-void SCX20CAN::Parse129029Payload(
-    const uint8_t* data,
-    uint8_t length
-)
+void SCX20CAN::Parse129029Payload(const uint8_t* data, uint8_t length)
 {
     // PGN 129029 should contain 43 bytes
     if (length < 43)
@@ -866,6 +875,9 @@ void SCX20CAN::Parse129029Payload(
     double utcTimeSeconds =
         timeRaw * 0.0001;
 
+    uint32_t epoch =
+        ((uint32_t)daysSince1970 * 86400UL)
+        + (uint32_t)utcTimeSeconds;
 
     // =================================================
     // Latitude
@@ -1083,18 +1095,21 @@ void SCX20CAN::Parse129029Payload(
     // Update PositionData
     // =================================================
 
-    position_.latitude =
-        latitude;
+    position_.latitude = latitude;
+    position_.longitude = longitude;
+    position_.altitude = altitude;
 
-    position_.longitude =
-        longitude;
+    //position_.utcDays = daysSince1970;
+    //position_.utcTime = utcTimeSeconds;
+    position_.timestamp = epoch;
 
-    position_.valid =
-        true;
+    position_.satellites = satellites;
+    position_.hdop = hdop;
+    position_.pdop = pdop;
 
-    position_.source =
-        PositionSource::SCX20;
+    position_.valid = true;
 
-    position_.lastUpdate =
-        millis();
+    position_.source = PositionSource::SCX20;
+
+    position_.lastUpdate = millis();
 }

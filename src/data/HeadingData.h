@@ -1,25 +1,23 @@
 #pragma once
 
-#include <stdint.h>
+#include <Arduino.h>
 
 enum class HeadingSource : uint8_t
 {
     NONE = 0,
-    SCX20
+    UBLOX   = 1,
+    SCX20   = 2
 };
 
 struct HeadingData
 {
+    double heading = 0.0;      // degrees
+    double rateOfTurn = 0.0; 
+
     bool valid = false;
 
-    HeadingSource source = HeadingSource::NONE;
+    HeadingSource source =
+        HeadingSource::NONE;
 
-    // Heading in degrees
-    double heading = 0.0;
-
-    // Rate of turn in degrees/second
-    double rateOfTurn = 0.0;
-
-    // millis() timestamp of last received update
     uint32_t lastUpdate = 0;
 };

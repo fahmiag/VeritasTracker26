@@ -156,6 +156,18 @@ void UBloxGNSS::Update()
         position_.day =
             gps_.date.day();
     }
+
+    position_.timestamp =
+    UTCToEpoch(
+        position_.year,
+        position_.month,
+        position_.day,
+        position_.hour,
+        position_.minute,
+        position_.second
+    );
+
+
 }
 
 
@@ -164,4 +176,53 @@ bool UBloxGNSS::GetPosition(PositionData& position)
     position = position_;
 
     return position_.valid;
+}
+
+uint32_t UTCToEpoch(
+    uint16_t year,
+    uint8_t month,
+    uint8_t day,
+    uint8_t hour,
+    uint8_t minute,
+    uint8_t second)
+{
+    uint32_t days = 0;
+
+    // Days from 1970 up to the beginning of this year
+    for (uint16_t y = 1970; y < year; y++)
+    {
+        days +=
+            ((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0))
+            ? 366
+            : 365;
+    }
+
+    // Days in each month
+    const uint8_t daysInMonth[] =
+    {
+        31, 28, 31, 30,
+        31, 30, 31, 31,
+        30, 31, 30, 31
+    };
+
+    for (uint8_t m = 1; m < month; m++)
+    {
+        days += daysInMonth[m - 1];
+
+        // Leap year
+        if (m == 2 &&
+            ((year % 4 == 0 && year % 100 != 0) ||
+             (year % 400 == 0)))
+        {
+            days++;
+        }
+    }
+
+    days += day - 1;
+
+    return
+        days * 86400UL +
+        hour * 3600UL +
+        minute * 60UL +
+        second;
 }
