@@ -4,6 +4,7 @@
 #include <TinyGPSPlus.h>
 
 #include "../data/PositionData.h"
+#include "../utils/DateTime.h"
 
 class UBloxGNSS
 {
@@ -27,11 +28,5 @@ private:
 
     static constexpr uint32_t BAUD_RATE = 9600;
 
-    uint32_t UTCToEpoch(
-    uint16_t year,
-    uint8_t month,
-    uint8_t day,
-    uint8_t hour,
-    uint8_t minute,
-    uint8_t second);
+
 };

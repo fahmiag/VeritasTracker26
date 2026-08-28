@@ -879,6 +879,11 @@ void SCX20CAN::Parse129029Payload(const uint8_t* data, uint8_t length)
         ((uint32_t)daysSince1970 * 86400UL)
         + (uint32_t)utcTimeSeconds;
 
+    UTCDateTime utc = EpochToUTC(
+                        daysSince1970,
+                        utcTimeSeconds
+                     );
+
     // =================================================
     // Latitude
     // =================================================
@@ -1092,7 +1097,7 @@ void SCX20CAN::Parse129029Payload(const uint8_t* data, uint8_t length)
 
 
     // =================================================
-    // Update PositionData
+    // Populate PositionData
     // =================================================
 
     position_.latitude = latitude;
@@ -1102,6 +1107,13 @@ void SCX20CAN::Parse129029Payload(const uint8_t* data, uint8_t length)
     //position_.utcDays = daysSince1970;
     //position_.utcTime = utcTimeSeconds;
     position_.timestamp = epoch;
+
+    position_.year = utc.year;
+    position_.month = utc.month;
+    position_.day =  utc.day;
+    position_.hour =  utc.hour;
+    position_.minute =  utc.minute;
+    position_.second =  utc.second;
 
     position_.satellites = satellites;
     position_.hdop = hdop;

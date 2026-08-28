@@ -5,6 +5,7 @@
 
 #include "../data/PositionData.h"
 #include "../data/HeadingData.h"
+#include "../utils/DateTime.h"
 
 class SCX20CAN
 {
