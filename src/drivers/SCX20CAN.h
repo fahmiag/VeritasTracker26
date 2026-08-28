@@ -59,17 +59,14 @@ private:
 
     struct FastPacketBuffer
     {
-        bool active;
+        bool active = false;
 
-        uint8_t sequence;
+        uint8_t sequence = 0;
+        uint8_t expectedLength = 0;
+        uint8_t receivedLength = 0;
+        uint8_t nextFrame = 0;
 
-        uint8_t expectedLength;
-
-        uint8_t receivedLength;
-
-        uint8_t nextFrame;
-
-        uint8_t data[FAST_PACKET_BUFFER_SIZE];
+        uint8_t data[FAST_PACKET_BUFFER_SIZE] = {};
     };
 
     FastPacketBuffer gnssPacket_;
@@ -81,6 +78,11 @@ private:
         uint8_t* data
     );
 
+    void Parse129029Payload(
+        const uint8_t* data,
+        uint8_t length
+    );
+
     // -------------------------------------------------
     // Helpers
     // -------------------------------------------------
@@ -88,4 +90,5 @@ private:
     uint32_t ExtractPGN(
         uint32_t canId
     );
+
 };
