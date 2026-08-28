@@ -161,20 +161,351 @@ void SCX20CAN::ProcessMessage(
     switch (pgn)
     {
         case 129029:
-
-            Process129029(
-                len,
-                data
-            );
-
+            Process129029(len,data);//Multi Frame data
             break;
-
+        
+        case 129026:
+            Parse129026(len,data);//Single frame data
+            break;
+        
+        case 127250:
+            Parse127250(len,data); //Single frame data
+            break;
 
         default:
             break;
     }
 }
 
+// =====================================================
+// Process Dedicate PGN
+// =====================================================
+//COG SOG
+void SCX20CAN::Parse129026(
+    uint8_t len,
+    uint8_t* data
+)
+{
+    if (len < 8)
+    {
+        return;
+    }
+
+
+    Serial.print("COG SOG: ");
+
+    for (uint8_t i = 0; i < len; i++)
+    {
+
+        Serial.print(data[i], HEX);
+        Serial.print(" ");
+    }
+
+    Serial.println();
+
+
+    uint8_t sid =
+        data[0];
+
+
+    // -------------------------------------------------
+    // Reference
+    // -------------------------------------------------
+
+    uint8_t reference =
+        data[1] & 0x03;
+
+
+    // -------------------------------------------------
+    // COG
+    // -------------------------------------------------
+
+    uint16_t cogRaw =
+        (uint16_t)data[2] |
+        ((uint16_t)data[3] << 8);
+
+
+    // -------------------------------------------------
+    // SOG
+    // -------------------------------------------------
+
+    uint16_t sogRaw =
+        (uint16_t)data[4] |
+        ((uint16_t)data[5] << 8);
+
+
+    // -------------------------------------------------
+    // COG
+    // -------------------------------------------------
+
+    if (cogRaw != 0xFFFF)
+    {
+        double cogRadians =
+            cogRaw * 0.0001;
+
+        double cogDegrees =
+            cogRadians * 180.0 / PI;
+
+        cogDegrees =
+            fmod(
+                cogDegrees,
+                360.0
+            );
+
+        if (cogDegrees < 0)
+        {
+            cogDegrees += 360.0;
+        }
+
+        position_.course =
+            cogDegrees;
+    }
+
+
+    // -------------------------------------------------
+    // SOG
+    // -------------------------------------------------
+
+    if (sogRaw != 0xFFFF)
+    {
+        double speedMetersPerSecond =
+            sogRaw * 0.01;
+
+        position_.speed =
+            speedMetersPerSecond * 1.943844;
+    }
+
+
+    // -------------------------------------------------
+    // Debug
+    // -------------------------------------------------
+
+    Serial.println();
+
+    Serial.println(
+        "========== 129026 =========="
+    );
+
+    Serial.print("SID: ");
+    Serial.println(sid);
+
+
+    Serial.print("COG: ");
+
+    if (cogRaw != 0xFFFF)
+    {
+        Serial.print(
+            cogRaw * 0.0001 * 180.0 / PI,
+            3
+        );
+
+        Serial.println(" deg");
+    }
+    else
+    {
+        Serial.println("N/A");
+    }
+
+
+    Serial.print("SOG: ");
+
+    if (sogRaw != 0xFFFF)
+    {
+        Serial.print(
+            sogRaw * 0.01 * 1.943844,
+            3
+        );
+
+        Serial.println(" knots");
+    }
+    else
+    {
+        Serial.println("N/A");
+    }
+
+
+    Serial.print("Reference: ");
+
+    switch (reference)
+    {
+        case 0:
+            Serial.println("True");
+            break;
+
+        case 1:
+            Serial.println("Magnetic");
+            break;
+
+        default:
+            Serial.println("Reserved");
+            break;
+    }
+
+
+    Serial.println(
+        "============================"
+    );
+}
+
+//Heading
+void SCX20CAN::Parse127250(
+    uint8_t len,
+    uint8_t* data
+)
+{
+    if (len < 8)
+    {
+        return;
+    }
+
+    Serial.print("Heading: ");
+    for (uint8_t i = 0; i < len; i++)
+    {
+        Serial.print(data[i], HEX);
+        Serial.print(" ");
+    }
+    Serial.println();
+
+    uint8_t sid = data[0];
+
+    uint16_t headingRaw =
+        (uint16_t)data[1] |
+        ((uint16_t)data[2] << 8);
+
+    int16_t deviationRaw =
+        (int16_t)(
+            (uint16_t)data[3] |
+            ((uint16_t)data[4] << 8)
+        );
+
+    int16_t variationRaw =
+        (int16_t)(
+            (uint16_t)data[5] |
+            ((uint16_t)data[6] << 8)
+        );
+
+    uint8_t reference =
+        data[7] & 0x03;
+
+
+    // -------------------------------------------------
+    // Heading
+    // -------------------------------------------------
+
+    if (headingRaw != 0xFFFF)
+    {
+        double headingRadians =
+            headingRaw * 0.0001;
+
+        double headingDegrees =
+            headingRadians * 180.0 / PI;
+
+        headingDegrees =
+            fmod(
+                headingDegrees,
+                360.0
+            );
+
+        if (headingDegrees < 0)
+        {
+            headingDegrees += 360.0;
+        }
+
+        heading_.heading =
+            headingDegrees;
+
+        heading_.valid =
+            true;
+
+        heading_.source =
+            HeadingSource::SCX20;
+
+        heading_.lastUpdate =
+            millis();
+    }
+
+
+    // -------------------------------------------------
+    // Debug
+    // -------------------------------------------------
+
+    Serial.println();
+
+    Serial.println(
+        "========== 127250 =========="
+    );
+
+    Serial.print("SID: ");
+    Serial.println(sid);
+
+    Serial.print("Heading: ");
+    Serial.print(
+        headingRaw * 0.0001 * 180.0 / PI,
+        3
+    );
+
+    Serial.println(" deg");
+
+
+    if (deviationRaw != 0x7FFF)
+    {
+        Serial.print("Deviation: ");
+
+        Serial.print(
+            deviationRaw * 0.0001 * 180.0 / PI,
+            3
+        );
+
+        Serial.println(" deg");
+    }
+    else
+    {
+        Serial.println(
+            "Deviation: N/A"
+        );
+    }
+
+
+    if (variationRaw != 0x7FFF)
+    {
+        Serial.print("Variation: ");
+
+        Serial.print(
+            variationRaw * 0.0001 * 180.0 / PI,
+            3
+        );
+
+        Serial.println(" deg");
+    }
+    else
+    {
+        Serial.println(
+            "Variation: N/A"
+        );
+    }
+
+
+    Serial.print("Reference: ");
+
+    switch (reference)
+    {
+        case 0:
+            Serial.println("True");
+            break;
+
+        case 1:
+            Serial.println("Magnetic");
+            break;
+
+        default:
+            Serial.println("Reserved");
+            break;
+    }
+
+    Serial.println(
+        "============================"
+    );
+}
 
 // =====================================================
 // Reset Fast Packet
@@ -212,7 +543,7 @@ void SCX20CAN::Process129029(
     if (len != 8)
     {
         return;
-    }
+    } 
 
 
     /*
