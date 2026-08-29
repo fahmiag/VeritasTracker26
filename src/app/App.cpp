@@ -61,24 +61,25 @@ void App::Begin()
 
     delay(500);
 
-    if (rockBlock_.Begin())
-    {
-        Serial.println("RockBLOCK: OK");
-    }
-    else
-    {
-        Serial.println("RockBLOCK: ERROR");
-    }
+    //Done By GPS Manager
+    // if (rockBlock_.Begin())
+    // {
+    //     Serial.println("RockBLOCK: OK");
+    // }
+    // else
+    // {
+    //     Serial.println("RockBLOCK: ERROR");
+    // }
 
-    if (scx20_.Begin())
-    {
-        Serial.println("SCX-20: OK");
+    // if (scx20_.Begin())
+    // {
+    //     Serial.println("SCX-20: OK");
 
-    }
-    else
-    {
-        Serial.println("SCX-20: ERROR");
-    }
+    // }
+    // else
+    // {
+    //     Serial.println("SCX-20: ERROR");
+    // }
 
 
     satelliteManager_.Begin();
@@ -264,7 +265,7 @@ void App::Run()
 
     bool positionValid =
         gpsManager_.GetPosition(
-            position
+            position_
         );
 
 
@@ -285,12 +286,12 @@ void App::Run()
 
     display_.Update(
         buttonEvent,
-        position
+        position_
     );
 
     if (!telemetryStarted_)
     {
-        if (position.valid)
+        if (position_.valid)
         {
         if (SendTelemetry())
         {
@@ -413,19 +414,44 @@ void App::Run()
         lastLogTime_ = now;
 
 
-        HeadingData heading;
+        //HeadingData heading;
+
+        //DEBUG===========================
+        if (gpsManager_.GetHeading(heading_))
+        {
+            Serial.print("[APP] Heading: ");
+            Serial.println(heading_.heading, 3);
+
+            Serial.print("[APP] Heading valid: ");
+            Serial.println(heading_.valid ? "YES" : "NO");
+
+            Serial.print("[APP] Heading source: ");
+            Serial.println(
+                static_cast<uint8_t>(heading_.source)
+            );
+        }
+        else
+        {
+            Serial.println("[APP] No valid heading");
+        }
 
 
-        headingManager_.GetHeading(
-            heading
-        );
+        //=================================
+
+
+        // headingManager_.GetHeading(
+        //     heading
+        // );
+            //DEBUG===========================
+            Serial.print("[APP] headingManager_.GetHeading: ");
+            Serial.println(heading_.heading, 3);
 
 
         if (positionValid)
         {
             sdLogger_.LogNavigation(
-                position,
-                heading
+                position_,
+                heading_
             );
         }
     }
@@ -445,7 +471,7 @@ void App::Run()
 
 bool App::SendTelemetry()
 {
-    if (!position.valid)
+    if (!position_.valid)
     {
         Serial.println(
             "[SAT] GPS position invalid"
@@ -466,13 +492,13 @@ bool App::SendTelemetry()
     packet.flags =
         Telemetry::NONE;
 
-    if (position.valid)
+    if (position_.valid)
     {
         packet.flags |=
             Telemetry::GPS_VALID;
     }
 
-    if (heading.valid)
+    if (heading_.valid)
     {
         packet.flags |=
             Telemetry::HEADING_VALID;
@@ -480,33 +506,46 @@ bool App::SendTelemetry()
 
     packet.timestamp =
         DateTimeToUnix(
-            position.year,
-            position.month,
-            position.day,
-            position.hour,
-            position.minute,
-            position.second
+            position_.year,
+            position_.month,
+            position_.day,
+            position_.hour,
+            position_.minute,
+            position_.second
         );
 
     packet.latitude =
         static_cast<int32_t>(
-            position.latitude * 10000000.0
+            position_.latitude * 10000000.0
         );
 
     packet.longitude =
         static_cast<int32_t>(
-            position.longitude * 10000000.0
+            position_.longitude * 10000000.0
         );
 
     packet.cog =
         static_cast<uint16_t>(
-            position.course * 100.0
+            position_.course * 100.0
         );
+
+        //debug
+        Serial.print("[APP]  HeadingData: ");
+        Serial.println(heading_.heading, 3);
 
     packet.heading =
         static_cast<uint16_t>(
-            heading.heading * 100.0
+            heading_.heading * 100.0
         );
+
+    if (heading_.valid)
+    {
+        packet.flags |= (1 << 2);
+    }
+
+        //debug
+        Serial.print("[APP] TX Heading: ");
+        Serial.println(packet.heading, 3);
 
     return satelliteManager_.SendTelemetry(packet);
 }

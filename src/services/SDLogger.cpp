@@ -150,8 +150,7 @@ bool SDLogger::WriteHeader()
         "course,"
         "satellites,"
         "hdop,"
-        "heading,"
-        "heading_source";
+        "heading";
 
 
     return sdCard_.WriteLine(

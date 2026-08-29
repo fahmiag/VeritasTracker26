@@ -42,6 +42,8 @@ void HeadingManager::Update()
 bool HeadingManager::GetHeading( HeadingData& heading)
 {
     heading = headingData_; 
+    Serial.print("Get Heading: ");
+    //Serial.println(heading);
     return headingData_.valid;
 }
 

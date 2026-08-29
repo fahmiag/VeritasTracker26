@@ -164,11 +164,11 @@ void SCX20CAN::ProcessMessage(
         //     Process129029(len,data);//Multi Frame data
         //     break;
         
-        case 129026:
-            Parse129026(len,data);//Single frame data
-            break;
+        // case 129026:
+        //     Parse129026(len,data);//Single frame data
+        //     break;
         
-        case 127250:
+        case 127250: //Heading
             Parse127250(len,data); //Single frame data
             break;
 

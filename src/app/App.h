@@ -37,8 +37,8 @@ public:
 
 private:
 
-    PositionData position;
-    HeadingData heading;
+    PositionData position_;
+    HeadingData heading_;
     // -----------------------------
     // Hardware drivers
     // -----------------------------
@@ -82,7 +82,7 @@ private:
 
     uint32_t lastTelemetryTime_;
 
-    static constexpr uint32_t TELEMETRY_INTERVAL_MS =5UL * 60UL * 1000UL;
+    static constexpr uint32_t TELEMETRY_INTERVAL_MS =1UL * 60UL * 1000UL;//5UL * 60UL * 1000UL;
     static constexpr uint32_t TELEMETRY_TIMEOUT_MS = 10UL * 60UL * 1000UL;
 
     bool SendTelemetry();

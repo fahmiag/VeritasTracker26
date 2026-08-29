@@ -148,6 +148,8 @@ bool GPSManager::GetHeading(
 
             return true;
         }
+
+        
     }
 
 

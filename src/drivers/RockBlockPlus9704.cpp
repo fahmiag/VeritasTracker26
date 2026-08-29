@@ -254,3 +254,4 @@ bool RockBlockPlus9704::WasLastSendSuccessful() const
 {
     return lastSendSuccessful_;
 }
+

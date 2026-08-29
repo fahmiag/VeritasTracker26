@@ -42,6 +42,8 @@ public:
         rbMsgStatus_t status
     );
 
+  
+
 private:
 
     HardwareSerial serial_;
