@@ -31,6 +31,7 @@ void HeadingManager::Update()
      *
      * For now, there is no heading source.
      */
+    scx20_.Update();
 
 
 }

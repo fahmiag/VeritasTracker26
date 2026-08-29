@@ -160,9 +160,9 @@ void SCX20CAN::ProcessMessage(
 
     switch (pgn)
     {
-        case 129029:
-            Process129029(len,data);//Multi Frame data
-            break;
+        // case 129029:
+        //     Process129029(len,data);//Multi Frame data
+        //     break;
         
         case 129026:
             Parse129026(len,data);//Single frame data
@@ -192,16 +192,16 @@ void SCX20CAN::Parse129026(
     }
 
 
-    Serial.print("COG SOG: ");
+    // Serial.print("COG SOG: ");
 
-    for (uint8_t i = 0; i < len; i++)
-    {
+    // for (uint8_t i = 0; i < len; i++)
+    // {
 
-        Serial.print(data[i], HEX);
-        Serial.print(" ");
-    }
+    //     Serial.print(data[i], HEX);
+    //     Serial.print(" ");
+    // }
 
-    Serial.println();
+    // Serial.println();
 
 
     uint8_t sid =
@@ -280,71 +280,71 @@ void SCX20CAN::Parse129026(
     // Debug
     // -------------------------------------------------
 
-    Serial.println();
+    // Serial.println();
 
-    Serial.println(
-        "========== 129026 =========="
-    );
+    // Serial.println(
+    //     "========== 129026 =========="
+    // );
 
-    Serial.print("SID: ");
-    Serial.println(sid);
-
-
-    Serial.print("COG: ");
-
-    if (cogRaw != 0xFFFF)
-    {
-        Serial.print(
-            cogRaw * 0.0001 * 180.0 / PI,
-            3
-        );
-
-        Serial.println(" deg");
-    }
-    else
-    {
-        Serial.println("N/A");
-    }
+    // Serial.print("SID: ");
+    // Serial.println(sid);
 
 
-    Serial.print("SOG: ");
+    // Serial.print("COG: ");
 
-    if (sogRaw != 0xFFFF)
-    {
-        Serial.print(
-            sogRaw * 0.01 * 1.943844,
-            3
-        );
+    // if (cogRaw != 0xFFFF)
+    // {
+    //     Serial.print(
+    //         cogRaw * 0.0001 * 180.0 / PI,
+    //         3
+    //     );
 
-        Serial.println(" knots");
-    }
-    else
-    {
-        Serial.println("N/A");
-    }
-
-
-    Serial.print("Reference: ");
-
-    switch (reference)
-    {
-        case 0:
-            Serial.println("True");
-            break;
-
-        case 1:
-            Serial.println("Magnetic");
-            break;
-
-        default:
-            Serial.println("Reserved");
-            break;
-    }
+    //     Serial.println(" deg");
+    // }
+    // else
+    // {
+    //     Serial.println("N/A");
+    // }
 
 
-    Serial.println(
-        "============================"
-    );
+    // Serial.print("SOG: ");
+
+    // if (sogRaw != 0xFFFF)
+    // {
+    //     Serial.print(
+    //         sogRaw * 0.01 * 1.943844,
+    //         3
+    //     );
+
+    //     Serial.println(" knots");
+    // }
+    // else
+    // {
+    //     Serial.println("N/A");
+    // }
+
+
+    // Serial.print("Reference: ");
+
+    // switch (reference)
+    // {
+    //     case 0:
+    //         Serial.println("True");
+    //         break;
+
+    //     case 1:
+    //         Serial.println("Magnetic");
+    //         break;
+
+    //     default:
+    //         Serial.println("Reserved");
+    //         break;
+    // }
+
+
+    // Serial.println(
+    //     "============================"
+    // );
 
     if (cogRaw != 0xFFFF)
     {
@@ -370,13 +370,13 @@ void SCX20CAN::Parse127250(
         return;
     }
 
-    Serial.print("Heading: ");
-    for (uint8_t i = 0; i < len; i++)
-    {
-        Serial.print(data[i], HEX);
-        Serial.print(" ");
-    }
-    Serial.println();
+    // Serial.print("Heading: ");
+    // for (uint8_t i = 0; i < len; i++)
+    // {
+    //     Serial.print(data[i], HEX);
+    //     Serial.print(" ");
+    // }
+    // Serial.println();
 
     uint8_t sid = data[0];
 
@@ -441,82 +441,82 @@ void SCX20CAN::Parse127250(
     // Debug
     // -------------------------------------------------
 
-    Serial.println();
+    // Serial.println();
 
-    Serial.println(
-        "========== 127250 =========="
-    );
+    // Serial.println(
+    //     "========== 127250 =========="
+    // );
 
-    Serial.print("SID: ");
-    Serial.println(sid);
+    // Serial.print("SID: ");
+    // Serial.println(sid);
 
-    Serial.print("Heading: ");
-    Serial.print(
-        headingRaw * 0.0001 * 180.0 / PI,
-        3
-    );
+    // Serial.print("Heading: ");
+    // Serial.print(
+    //     headingRaw * 0.0001 * 180.0 / PI,
+    //     3
+    // );
 
-    Serial.println(" deg");
-
-
-    if (deviationRaw != 0x7FFF)
-    {
-        Serial.print("Deviation: ");
-
-        Serial.print(
-            deviationRaw * 0.0001 * 180.0 / PI,
-            3
-        );
-
-        Serial.println(" deg");
-    }
-    else
-    {
-        Serial.println(
-            "Deviation: N/A"
-        );
-    }
+    // Serial.println(" deg");
 
 
-    if (variationRaw != 0x7FFF)
-    {
-        Serial.print("Variation: ");
+    // if (deviationRaw != 0x7FFF)
+    // {
+    //     Serial.print("Deviation: ");
 
-        Serial.print(
-            variationRaw * 0.0001 * 180.0 / PI,
-            3
-        );
+    //     Serial.print(
+    //         deviationRaw * 0.0001 * 180.0 / PI,
+    //         3
+    //     );
 
-        Serial.println(" deg");
-    }
-    else
-    {
-        Serial.println(
-            "Variation: N/A"
-        );
-    }
+    //     Serial.println(" deg");
+    // }
+    // else
+    // {
+    //     Serial.println(
+    //         "Deviation: N/A"
+    //     );
+    // }
 
 
-    Serial.print("Reference: ");
+    // if (variationRaw != 0x7FFF)
+    // {
+    //     Serial.print("Variation: ");
 
-    switch (reference)
-    {
-        case 0:
-            Serial.println("True");
-            break;
+    //     Serial.print(
+    //         variationRaw * 0.0001 * 180.0 / PI,
+    //         3
+    //     );
 
-        case 1:
-            Serial.println("Magnetic");
-            break;
+    //     Serial.println(" deg");
+    // }
+    // else
+    // {
+    //     Serial.println(
+    //         "Variation: N/A"
+    //     );
+    // }
 
-        default:
-            Serial.println("Reserved");
-            break;
-    }
 
-    Serial.println(
-        "============================"
-    );
+    // Serial.print("Reference: ");
+
+    // switch (reference)
+    // {
+    //     case 0:
+    //         Serial.println("True");
+    //         break;
+
+    //     case 1:
+    //         Serial.println("Magnetic");
+    //         break;
+
+    //     default:
+    //         Serial.println("Reserved");
+    //         break;
+    // }
+
+    // Serial.println(
+    //     "============================"
+    // );
 }
 
 // =====================================================
@@ -640,21 +640,21 @@ void SCX20CAN::Process129029(
         // Debug
         // -------------------------------------------------
 
-        Serial.print(
-            "[SCX20] 129029 START seq="
-        );
+        // Serial.print(
+        //     "[SCX20] 129029 START seq="
+        // );
 
-        Serial.print(
-            sequence
-        );
+        // Serial.print(
+        //     sequence
+        // );
 
-        Serial.print(
-            " length="
-        );
+        // Serial.print(
+        //     " length="
+        // );
 
-        Serial.println(
-            messageLength
-        );
+        // Serial.println(
+        //     messageLength
+        // );
 
 
         return;
@@ -698,21 +698,21 @@ void SCX20CAN::Process129029(
          * Missing or out-of-order frame.
          */
 
-        Serial.print(
-            "[SCX20] 129029 frame error. Expected "
-        );
+        // Serial.print(
+        //     "[SCX20] 129029 frame error. Expected "
+        // );
 
-        Serial.print(
-            gnssPacket_.nextFrame
-        );
+        // Serial.print(
+        //     gnssPacket_.nextFrame
+        // );
 
-        Serial.print(
-            " got "
-        );
+        // Serial.print(
+        //     " got "
+        // );
 
-        Serial.println(
-            frame
-        );
+        // Serial.println(
+        //     frame
+        // );
 
 
         ResetFastPacket();

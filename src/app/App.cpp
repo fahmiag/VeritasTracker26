@@ -38,221 +38,187 @@ TODO:
 // =====================================================
 
 App::App()
-    : sdLogger_(sdCard_),
+    : scx20_(),
+      ublox_(),
+      sdLogger_(sdCard_),
       lastLogTime_(0),
       satelliteManager_(rockBlock_),
-      lastTelemetryTime_(0),
-      telemetryStarted_(false)
+      gpsManager_(scx20_, ublox_),
+      telemetryStarted_(false),
+      lastTelemetryTime_(0)
 {
-}
+} 
 
 
 // =====================================================
 // Begin
 // =====================================================
 
+
 void App::Begin()
 {
     Serial.begin(115200);
+
     delay(500);
-    Serial.println();
-    Serial.println("==============================");
-    Serial.println(" SCX-20 CAN Test");
-    Serial.println("==============================");
 
-    Serial.println("[APP] Starting SCX-20...");
-
-    if (!scx20_.Begin())
+    if (rockBlock_.Begin())
     {
-        Serial.println(
-            "[APP] SCX-20 initialization FAILED"
-        );
-
-       // return false;
+        Serial.println("RockBLOCK: OK");
+    }
+    else
+    {
+        Serial.println("RockBLOCK: ERROR");
     }
 
-    Serial.println(
-        "[APP] SCX-20 initialization OK"
+    if (scx20_.Begin())
+    {
+        Serial.println("SCX-20: OK");
+
+    }
+    else
+    {
+        Serial.println("SCX-20: ERROR");
+    }
+
+
+    satelliteManager_.Begin();
+
+    //SendTestTelemetry();
+
+    Serial.println();
+    Serial.println("==============================");
+    Serial.println(" GPS Tracker Starting");
+    Serial.println("==============================");
+
+
+    // -----------------------------------------
+    // Display
+    // -----------------------------------------
+
+    if (display_.Begin())
+    {
+        Serial.println("Display: OK");
+    }
+    else
+    {
+        Serial.println("Display: ERROR");
+    }
+
+
+    // -----------------------------------------
+    // Buttons
+    // -----------------------------------------
+
+    if (buttons_.Begin())
+    {
+        Serial.println("Buttons: OK");
+    }
+    else
+    {
+        Serial.println("Buttons: ERROR");
+    }
+
+
+    // -----------------------------------------
+    // Status LED
+    // -----------------------------------------
+
+    if (statusLED_.Begin())
+    {
+        Serial.println("Status LED: OK");
+    }
+    else
+    {
+        Serial.println("Status LED: ERROR");
+    }
+
+
+
+
+
+    // -----------------------------------------
+    // GPS Manager
+    // -----------------------------------------
+
+    if (!gpsManager_.Begin())
+    {
+        Serial.println(
+            "GPS Manager: ERROR"
+        );
+    }
+    else
+    {
+        Serial.println(
+            "GPS Manager: OK"
+        );
+    }
+
+
+    // -----------------------------------------
+    // Heading Manager
+    // -----------------------------------------
+
+    if (!headingManager_.Begin())
+    {
+        Serial.println(
+            "Heading Manager: ERROR"
+        );
+    }
+    else
+    {
+        Serial.println(
+            "Heading Manager: OK"
+        );
+    }
+
+
+    // -----------------------------------------
+    // SD Card
+    // -----------------------------------------
+
+    if (sdCard_.Begin())
+    {
+        Serial.println(
+            "SD Card: OK"
+        );
+
+
+        if (sdLogger_.Begin())
+        {
+            Serial.println(
+                "SD Logger: OK"
+            );
+        }
+        else
+        {
+            Serial.println(
+                "SD Logger: ERROR"
+            );
+        }
+    }
+    else
+    {
+        Serial.println(
+            "SD Card: ERROR"
+        );
+    }
+
+
+    // -----------------------------------------
+    // Normal LED operation
+    // -----------------------------------------
+
+    statusLED_.SetMode(
+        StatusLED::Mode::NORMAL
     );
 
-  //  return true;
+
+    Serial.println("==============================");
+    Serial.println("System ready");
+    Serial.println("==============================");
+
+
 }
-
-void App::Update()
-{
-    scx20_.Update();
-}
-
-
-// void App::Begin()
-// {
-//     Serial.begin(115200);
-
-//     delay(500);
-
-//     if (rockBlock_.Begin())
-//     {
-//         Serial.println("RockBLOCK: OK");
-//     }
-//     else
-//     {
-//         Serial.println("RockBLOCK: ERROR");
-//     }
-
-//     // rockBlock_.SendText(
-//     //     RAW_TOPIC,
-//     //     "Hello from application!"
-//     // );
-
-//     satelliteManager_.Begin();
-
-//     //SendTestTelemetry();
-
-//     Serial.println();
-//     Serial.println("==============================");
-//     Serial.println(" GPS Tracker Starting");
-//     Serial.println("==============================");
-
-
-//     // -----------------------------------------
-//     // Display
-//     // -----------------------------------------
-
-//     if (display_.Begin())
-//     {
-//         Serial.println("Display: OK");
-//     }
-//     else
-//     {
-//         Serial.println("Display: ERROR");
-//     }
-
-
-//     // -----------------------------------------
-//     // Buttons
-//     // -----------------------------------------
-
-//     if (buttons_.Begin())
-//     {
-//         Serial.println("Buttons: OK");
-//     }
-//     else
-//     {
-//         Serial.println("Buttons: ERROR");
-//     }
-
-
-//     // -----------------------------------------
-//     // Status LED
-//     // -----------------------------------------
-
-//     if (statusLED_.Begin())
-//     {
-//         Serial.println("Status LED: OK");
-//     }
-//     else
-//     {
-//         Serial.println("Status LED: ERROR");
-//     }
-
-
-//     // -----------------------------------------
-//     // SCX-20 CAN
-//     // -----------------------------------------
-
-//     /*
-//      * SCX-20 is currently being
-//      * investigated separately.
-//      *
-//      * Leave the driver disabled for now.
-//      */
-
-//     Serial.println("SCX-20: disabled");
-
-
-//     // -----------------------------------------
-//     // GPS Manager
-//     // -----------------------------------------
-
-//     if (!gpsManager_.Begin())
-//     {
-//         Serial.println(
-//             "GPS Manager: ERROR"
-//         );
-//     }
-//     else
-//     {
-//         Serial.println(
-//             "GPS Manager: OK"
-//         );
-//     }
-
-
-//     // -----------------------------------------
-//     // Heading Manager
-//     // -----------------------------------------
-
-//     if (!headingManager_.Begin())
-//     {
-//         Serial.println(
-//             "Heading Manager: ERROR"
-//         );
-//     }
-//     else
-//     {
-//         Serial.println(
-//             "Heading Manager: OK"
-//         );
-//     }
-
-
-//     // -----------------------------------------
-//     // SD Card
-//     // -----------------------------------------
-
-//     if (sdCard_.Begin())
-//     {
-//         Serial.println(
-//             "SD Card: OK"
-//         );
-
-
-//         if (sdLogger_.Begin())
-//         {
-//             Serial.println(
-//                 "SD Logger: OK"
-//             );
-//         }
-//         else
-//         {
-//             Serial.println(
-//                 "SD Logger: ERROR"
-//             );
-//         }
-//     }
-//     else
-//     {
-//         Serial.println(
-//             "SD Card: ERROR"
-//         );
-//     }
-
-
-//     // -----------------------------------------
-//     // Normal LED operation
-//     // -----------------------------------------
-
-//     statusLED_.SetMode(
-//         StatusLED::Mode::NORMAL
-//     );
-
-
-//     Serial.println("==============================");
-//     Serial.println("System ready");
-//     Serial.println("==============================");
-
-
-// }
 
 
 // ##############################################################
@@ -286,7 +252,8 @@ void App::Run()
     // // Heading
     // // -----------------------------------------
 
-    // headingManager_.Update();
+    headingManager_.Update();
+    
 
 
     // // -----------------------------------------

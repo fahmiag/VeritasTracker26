@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 
-//#include "../drivers/SCX20CAN.h"
+#include "../drivers/SCX20CAN.h"
 #include "../data/HeadingData.h"
 
 class HeadingManager
@@ -21,5 +21,7 @@ private:
 
 
     HeadingData headingData_;
+
+    SCX20CAN scx20_;
 
 };

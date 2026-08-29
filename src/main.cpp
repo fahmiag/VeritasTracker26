@@ -15,6 +15,6 @@ void setup()
 
 void loop()
 {
-   // app.Run();    //Actual Working Code
-    app.Update();   //Test Code
+    app.Run();    //Actual Working Code
+    //app.Update();   //Test Code
 }

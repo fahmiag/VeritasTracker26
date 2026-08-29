@@ -46,7 +46,7 @@ private:
     RockBlockPlus9704 rockBlock_;
     SatelliteManager satelliteManager_;
 
-   // UBloxGNSS ublox_;
+    UBloxGNSS ublox_;
     SCX20CAN scx20_;
     SDCard sdCard_;
 
