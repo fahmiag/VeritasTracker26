@@ -31,13 +31,14 @@ bool SatelliteManager::SendTelemetry(
 
     Serial.println("[SAT] SendTelemetry() entered");
 
-//DEBUG
-    // if (modem_.IsSending())
-    // {
-    //     Serial.println("[SAT] ERROR: RockBLOCK still sending");
+//DEBUG========================
+    if (modem_.IsSending())
+    {
+        Serial.println("[SAT] ERROR: RockBLOCK still sending");
 
-    //     return false;
-    // }
+        return false;
+    }
+//DEBUG========================
 
     Serial.println("[SAT] RockBLOCK ready for new message");
 
@@ -86,10 +87,6 @@ bool SatelliteManager::SendTelemetry(
     Serial.println(payloadHex_);
     Serial.println();
 
-    // return modem_.SendText(
-    //     TELEMETRY_TOPIC,
-    //     payloadHex_
-    // );
 
     // -------------------------------------------------
     // Send binary packet
@@ -97,14 +94,14 @@ bool SatelliteManager::SendTelemetry(
 
    
     //Debug ===============================================
-    // bool result = modem_.SendBinary(
-    //     RAW_TOPIC, //this is important
-    //     buffer,
-    //     TelemetryEncoder::PACKET_SIZE
-    // );
+    bool result = modem_.SendBinary(
+        RAW_TOPIC, //this is important
+        buffer,
+        TelemetryEncoder::PACKET_SIZE
+    );
 
-    Serial.println("SendBinary(): Dummy");
-    bool result =true;
+    // Serial.println("SendBinary(): Dummy");
+    // bool result =true;
 
     //===================================================
 

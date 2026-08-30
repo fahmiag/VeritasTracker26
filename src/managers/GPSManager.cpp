@@ -153,24 +153,7 @@ bool GPSManager::GetHeading(
     }
 
 
-    // --------------------------------------------------------
-    // Fallback to u-blox
-    // --------------------------------------------------------
-
-    // HeadingData ubloxHeading;
-
-
-    // if (ublox_.GetHeading(ubloxHeading))
-    // {
-    //     heading = ubloxHeading;
-
-    //     return true;
-    // }
-
-
-    // --------------------------------------------------------
-    // No valid heading available
-    // --------------------------------------------------------
+ 
 
     return false;
 }
