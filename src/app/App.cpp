@@ -61,16 +61,21 @@ void App::Begin()
 
     delay(500);
 
-    //Done By GPS Manager
-    // if (rockBlock_.Begin())
-    // {
-    //     Serial.println("RockBLOCK: OK");
-    // }
-    // else
-    // {
-    //     Serial.println("RockBLOCK: ERROR");
-    // }
+    Serial.println();
+    Serial.println("==============================");
+    Serial.println(" GPS Tracker Starting");
+    Serial.println("==============================");
+    
+    if (rockBlock_.Begin())
+    {
+        Serial.println("RockBLOCK: OK");
+    }
+    else
+    {
+        Serial.println("RockBLOCK: ERROR");
+    }
 
+    //Done By GPS Manager
     // if (scx20_.Begin())
     // {
     //     Serial.println("SCX-20: OK");
@@ -86,10 +91,7 @@ void App::Begin()
 
     //SendTestTelemetry();
 
-    Serial.println();
-    Serial.println("==============================");
-    Serial.println(" GPS Tracker Starting");
-    Serial.println("==============================");
+
 
 
     // -----------------------------------------
@@ -414,7 +416,7 @@ void App::Run()
         lastLogTime_ = now;
 
 
-        //HeadingData heading;
+       
 
         //DEBUG===========================
         if (gpsManager_.GetHeading(heading_))
@@ -439,9 +441,7 @@ void App::Run()
         //=================================
 
 
-        // headingManager_.GetHeading(
-        //     heading
-        // );
+        headingManager_.GetHeading(heading_);
             //DEBUG===========================
             Serial.print("[APP] headingManager_.GetHeading: ");
             Serial.println(heading_.heading, 3);
@@ -530,8 +530,8 @@ bool App::SendTelemetry()
         );
 
         //debug
-        Serial.print("[APP]  HeadingData: ");
-        Serial.println(heading_.heading, 3);
+        // Serial.print("[APP]  HeadingData: ");
+        // Serial.println(heading_.heading, 3);
 
     packet.heading =
         static_cast<uint16_t>(
@@ -544,8 +544,8 @@ bool App::SendTelemetry()
     }
 
         //debug
-        Serial.print("[APP] TX Heading: ");
-        Serial.println(packet.heading, 3);
+        // Serial.print("[APP] TX Heading: ");
+        // Serial.println(packet.heading, 3);
 
     return satelliteManager_.SendTelemetry(packet);
 }

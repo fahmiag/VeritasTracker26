@@ -7,6 +7,7 @@ V0.1.0-dev
 * Heading source : Furuno SCX-20
 * No Over-The-Air (OTA) message
 * No Postion GNSS from SCX-20
+* Display value not correct
 
 
 -------------

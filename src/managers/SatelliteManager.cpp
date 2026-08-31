@@ -100,8 +100,8 @@ bool SatelliteManager::SendTelemetry(
     //     TelemetryEncoder::PACKET_SIZE
     // );
 
-    Serial.println("SendBinary(): Dummy");
-    bool result =true;
+     Serial.println("SendBinary(): Dummy");
+     bool result =true;
 
     //===================================================
 
