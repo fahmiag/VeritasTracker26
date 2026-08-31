@@ -419,7 +419,7 @@ void App::Run()
        
 
         //DEBUG===========================
-        if (gpsManager_.GetHeading(heading_))
+        if (gpsManager_.GetHeading(heading_)) //do not delete
         {
             Serial.print("[APP] Heading: ");
             Serial.println(heading_.heading, 3);
@@ -441,10 +441,10 @@ void App::Run()
         //=================================
 
 
-        headingManager_.GetHeading(heading_);
-            //DEBUG===========================
-            Serial.print("[APP] headingManager_.GetHeading: ");
-            Serial.println(heading_.heading, 3);
+        // headingManager_.GetHeading(heading_);// not working
+        //     //DEBUG===========================
+        //     Serial.print("[APP] headingManager_.GetHeading: ");
+        //     Serial.println(heading_.heading, 3);
 
 
         if (positionValid)
@@ -530,8 +530,8 @@ bool App::SendTelemetry()
         );
 
         //debug
-        // Serial.print("[APP]  HeadingData: ");
-        // Serial.println(heading_.heading, 3);
+         Serial.print("[APP]  HeadingData: ");
+         Serial.println(heading_.heading, 3);
 
     packet.heading =
         static_cast<uint16_t>(
@@ -544,8 +544,8 @@ bool App::SendTelemetry()
     }
 
         //debug
-        // Serial.print("[APP] TX Heading: ");
-        // Serial.println(packet.heading, 3);
+         Serial.print("[APP] TX Heading: ");
+          Serial.println(packet.heading, 3);
 
     return satelliteManager_.SendTelemetry(packet);
 }
