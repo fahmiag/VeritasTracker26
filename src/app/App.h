@@ -22,6 +22,9 @@
 #include "../services/SDLogger.h"
 #include <Arduino.h>
 
+
+#include "../config/Debug.h"
+
 //App coordinates modules but doesn't implement hardware details.
 //App never talks directly to hardware.
 
@@ -82,7 +85,14 @@ private:
 
     uint32_t lastTelemetryTime_;
 
-    static constexpr uint32_t TELEMETRY_INTERVAL_MS =1UL * 60UL * 1000UL;//5UL * 60UL * 1000UL;
+    #if DEBUG_SATELLITE_TX
+        static constexpr uint32_t TELEMETRY_INTERVAL_MS =5UL * 60UL * 1000UL;
+    #else
+        static constexpr uint32_t TELEMETRY_INTERVAL_MS =1UL * 60UL * 1000UL;
+    #endif
+
+
+
     static constexpr uint32_t TELEMETRY_TIMEOUT_MS = 10UL * 60UL * 1000UL;
 
     bool SendTelemetry();

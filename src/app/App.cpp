@@ -416,21 +416,13 @@ void App::Run()
         lastLogTime_ = now;
 
 
-       
-
-        //DEBUG===========================
         if (gpsManager_.GetHeading(heading_)) //do not delete
         {
-            Serial.print("[APP] Heading: ");
-            Serial.println(heading_.heading, 3);
+            #if DEBUG_SCX20_HDG
+                Serial.print("[APP] Heading: ");
+                Serial.println(heading_.heading, 3);
+            #endif
 
-            Serial.print("[APP] Heading valid: ");
-            Serial.println(heading_.valid ? "YES" : "NO");
-
-            Serial.print("[APP] Heading source: ");
-            Serial.println(
-                static_cast<uint8_t>(heading_.source)
-            );
         }
         else
         {
@@ -438,13 +430,6 @@ void App::Run()
         }
 
 
-        //=================================
-
-
-        // headingManager_.GetHeading(heading_);// not working
-        //     //DEBUG===========================
-        //     Serial.print("[APP] headingManager_.GetHeading: ");
-        //     Serial.println(heading_.heading, 3);
 
 
         if (positionValid)

@@ -9,6 +9,11 @@ V0.1.0-dev
 * No Postion GNSS from SCX-20
 * Display value not correct
 
+TODO:
+- Set GPS source to uBlox
+- Set retry time for unsend message
+- dont increase sequence number when message not sent.
+
 
 -------------
 V0.2.0-dev
