@@ -4,7 +4,7 @@
 #include <HardwareSerial.h>
 
 #include "rockblock_9704.h"
-#include "../config/PinMap.h"
+#include "../../config/PinMap.h"
 
 class RockBlockPlus9704
 {

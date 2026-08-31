@@ -2,9 +2,9 @@
 
 #include <Arduino.h>
 
-#include "TelemetryPacket.h"
-#include "TelemetryEncoder.h"
-#include "../drivers/RockBlockPlus9704.h"
+#include "../data/TelemetryPacket.h"
+#include "../protocol/TelemetryEncoder.h"
+#include "../drivers/Satellite/RockBlockPlus9704.h"
 #include "../data/PositionData.h"
 #include "../data/HeadingData.h"
 

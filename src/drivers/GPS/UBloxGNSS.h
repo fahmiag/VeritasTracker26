@@ -3,8 +3,8 @@
 #include <Arduino.h>
 #include <TinyGPSPlus.h>
 
-#include "../data/PositionData.h"
-#include "../utils/DateTime.h"
+#include "../../data/PositionData.h"
+#include "../../utils/DateTime.h"
 
 class UBloxGNSS
 {

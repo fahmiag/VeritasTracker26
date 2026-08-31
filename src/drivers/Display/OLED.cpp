@@ -1,6 +1,6 @@
 #include "OLED.h"
 
-#include "../config/PinMap.h"
+#include "../../config/PinMap.h"
 
 OLED::OLED()
     : display_(128, 64, &Wire, -1)

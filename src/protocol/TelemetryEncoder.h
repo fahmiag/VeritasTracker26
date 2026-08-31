@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "TelemetryPacket.h"
+#include "../data/TelemetryPacket.h"
 
 class TelemetryEncoder
 {

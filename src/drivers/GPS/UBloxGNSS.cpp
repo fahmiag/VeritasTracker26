@@ -1,6 +1,6 @@
 #include "UBloxGNSS.h"
 
-#include "../config/PinMap.h"
+#include "../../config/PinMap.h"
 
 
 UBloxGNSS::UBloxGNSS()

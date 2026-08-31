@@ -7,15 +7,15 @@
 #include "../managers/HeadingManager.h"
 
 // Drivers
-#include "../drivers/UBloxGNSS.h"
-#include "../drivers/SCX20CAN.h"
+#include "../drivers/GPS/UBloxGNSS.h"
+#include "../drivers/CAN/SCX20CAN.h"
 #include "../drivers/StatusLED.h"
-#include "../drivers/SDCard.h"
-#include "../drivers/RockBlockPlus9704.h"
+#include "../drivers/Storage/SDCard.h"
+#include "../drivers/Satellite/RockBlockPlus9704.h"
 
-#include "../Satellite/SatelliteManager.h"
-#include "../Satellite/TelemetryConfig.h"
-#include "../Satellite/TelemetryPacket.h"
+#include "../managers/SatelliteManager.h"
+#include "../protocol/TelemetryConfig.h"
+#include "../data/TelemetryPacket.h"
 
 #include "../utils/TimeUtils.h"
 // Services

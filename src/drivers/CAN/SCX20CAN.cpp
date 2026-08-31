@@ -1,6 +1,6 @@
 #include "SCX20CAN.h"
 
-#include "../config/PinMap.h"
+#include "../../config/PinMap.h"
 
 
 // =====================================================

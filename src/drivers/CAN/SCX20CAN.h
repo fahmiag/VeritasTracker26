@@ -3,9 +3,9 @@
 #include <Arduino.h>
 #include "mcp_can.h"
 
-#include "../data/PositionData.h"
-#include "../data/HeadingData.h"
-#include "../utils/DateTime.h"
+#include "../../data/PositionData.h"
+#include "../../data/HeadingData.h"
+#include "../../utils/DateTime.h"
 
 class SCX20CAN
 {

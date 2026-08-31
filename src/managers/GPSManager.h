@@ -3,8 +3,8 @@
 #include "../data/PositionData.h"
 #include "../data/HeadingData.h"
 
-#include "../drivers/SCX20CAN.h"
-#include "../drivers/UBloxGNSS.h"
+#include "../drivers/CAN/SCX20CAN.h"
+#include "../drivers/GPS/UBloxGNSS.h"
 
 class GPSManager
 {

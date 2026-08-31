@@ -1,7 +1,7 @@
 #include "Buttons.h"
 
-#include "../config/PinMap.h"
-#include "../config/Config.h"
+#include "../../config/PinMap.h"
+#include "../../config/Config.h"
 
 bool Buttons::Begin()
 {

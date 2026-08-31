@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "TelemetryConfig.h"
+#include "../protocol/TelemetryConfig.h"
 
 // -----------------------------------------------------------------------------
 // Byte 3 - Source field

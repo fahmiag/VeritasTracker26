@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../drivers/OLED.h"
-#include "../drivers/Buttons.h"
+#include "../drivers/Display/OLED.h"
+#include "../drivers/Button/Buttons.h"
 #include "../data/PositionData.h"
 
 enum class DisplayScreen

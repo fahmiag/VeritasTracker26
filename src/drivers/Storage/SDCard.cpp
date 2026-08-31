@@ -1,6 +1,6 @@
 #include "SDCard.h"
 
-#include "../config/PinMap.h"
+#include "../../config/PinMap.h"
 
 
 SDCard::SDCard()
