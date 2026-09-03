@@ -93,7 +93,7 @@ private:
 
 
 
-    static constexpr uint32_t TELEMETRY_TIMEOUT_MS = 10UL * 60UL * 1000UL;
+    static constexpr uint32_t TELEMETRY_TIMEOUT_MS = 4UL * 60UL * 1000UL;
 
     bool SendTelemetry();
     bool telemetryStarted_;
