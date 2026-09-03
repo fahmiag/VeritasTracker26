@@ -216,6 +216,17 @@ void App::Begin()
     );
 
 
+    if (configuration_.Begin())
+    {
+        Serial.print("Configuration: OK, telemetry interval = ");
+        Serial.print(configuration_.GetReportingIntervalMinutes());
+        Serial.println(" minute(s)");
+    }
+    else
+    {
+        Serial.println("Configuration: ERROR, using defaults");
+    }
+
     Serial.println("==============================");
     Serial.println("System ready");
     Serial.println("==============================");
@@ -291,7 +302,14 @@ void App::Run()
         position_
     );
 
-    if (!telemetryStarted_)
+    const uint32_t telemetryIntervalMs =
+        configuration_.GetReportingIntervalMs();
+
+    if (telemetryIntervalMs == 0)
+    {
+        telemetryStarted_ = false;
+    }
+    else if (!telemetryStarted_)
     {
         if (position_.valid)
         {
@@ -313,9 +331,9 @@ void App::Run()
         }
         }
     }
-    else if (now - lastTelemetryTime_ >= TELEMETRY_INTERVAL_MS)
+    else if (now - lastTelemetryTime_ >= telemetryIntervalMs)
     {
-        Serial.println("\n5-minute telemetry interval reached");
+        Serial.println("\nTelemetry interval reached");
 
         if (SendTelemetry())
         {
@@ -474,20 +492,34 @@ bool App::SendTelemetry()
             Telemetry::Type::POSITION;
    
 
-    packet.flags =
-        Telemetry::NONE;
+    packet.status = 0;
 
     if (position_.valid)
     {
-        packet.flags |=
-            Telemetry::GPS_VALID;
+        packet.status |= Telemetry::POSITION_VALID;
+    }
+
+    if (position_.valid)
+    {
+        packet.status |= Telemetry::COG_VALID;
     }
 
     if (heading_.valid)
     {
-        packet.flags |=
-            Telemetry::HEADING_VALID;
+        packet.status |= Telemetry::HEADING_VALID;
     }
+
+    if (position_.year >= 1970 &&
+        position_.month >= 1 && position_.month <= 12 &&
+        position_.day >= 1 && position_.day <= 31)
+    {
+        packet.status |= Telemetry::TIME_VALID;
+    }
+
+    packet.positionSource =
+        (position_.source == PositionSource::SCX20)
+            ? Telemetry::PositionSource::SCX20
+            : Telemetry::PositionSource::UBLOX;
 
     packet.timestamp =
         DateTimeToUnix(
@@ -523,10 +555,6 @@ bool App::SendTelemetry()
             heading_.heading * 100.0
         );
 
-    if (heading_.valid)
-    {
-        packet.flags |= (1 << 2);
-    }
 
         //debug
          Serial.print("[APP] TX Heading: ");

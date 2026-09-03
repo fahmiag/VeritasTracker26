@@ -1,45 +1,56 @@
-
 #include "TelemetryEncoder.h"
-#include <Arduino.h>
 
 namespace
 {
-    // Byte 3:
-    // Bits 0-1 = GPS source
-    // Bits 2-7 = reserved
-    constexpr uint8_t GPS_SOURCE_MASK = 0x03;
-
-    void WriteUint16LE(
-        uint8_t* buffer,
-        size_t& index,
-        uint16_t value)
+    void WriteUint16BE(uint8_t* buffer, size_t& index, uint16_t value)
     {
-        buffer[index++] = static_cast<uint8_t>(value & 0xFF);
         buffer[index++] = static_cast<uint8_t>((value >> 8) & 0xFF);
+        buffer[index++] = static_cast<uint8_t>(value & 0xFF);
     }
 
-    void WriteUint32LE(
-        uint8_t* buffer,
-        size_t& index,
-        uint32_t value)
+    void WriteUint32BE(uint8_t* buffer, size_t& index, uint32_t value)
     {
-        buffer[index++] = static_cast<uint8_t>(value & 0xFF);
-        buffer[index++] = static_cast<uint8_t>((value >> 8) & 0xFF);
-        buffer[index++] = static_cast<uint8_t>((value >> 16) & 0xFF);
         buffer[index++] = static_cast<uint8_t>((value >> 24) & 0xFF);
+        buffer[index++] = static_cast<uint8_t>((value >> 16) & 0xFF);
+        buffer[index++] = static_cast<uint8_t>((value >> 8) & 0xFF);
+        buffer[index++] = static_cast<uint8_t>(value & 0xFF);
     }
 
-    void WriteInt32LE(
-        uint8_t* buffer,
-        size_t& index,
-        int32_t value)
+    void WriteInt32BE(uint8_t* buffer, size_t& index, int32_t value)
     {
-        WriteUint32LE(
-            buffer,
-            index,
-            static_cast<uint32_t>(value)
-        );
+        WriteUint32BE(buffer, index, static_cast<uint32_t>(value));
     }
+}
+
+uint16_t TelemetryEncoder::Crc16(
+    const uint8_t* data,
+    size_t length)
+{
+    if (data == nullptr)
+    {
+        return 0;
+    }
+
+    uint16_t crc = 0x0000;
+
+    for (size_t i = 0; i < length; ++i)
+    {
+        crc ^= static_cast<uint16_t>(data[i]) << 8;
+
+        for (uint8_t bit = 0; bit < 8; ++bit)
+        {
+            if (crc & 0x8000)
+            {
+                crc = static_cast<uint16_t>((crc << 1) ^ 0x1021);
+            }
+            else
+            {
+                crc = static_cast<uint16_t>(crc << 1);
+            }
+        }
+    }
+
+    return crc;
 }
 
 bool TelemetryEncoder::Encode(
@@ -47,115 +58,46 @@ bool TelemetryEncoder::Encode(
     uint8_t* buffer,
     size_t bufferSize)
 {
-    if (buffer == nullptr)
+    if (buffer == nullptr || bufferSize < PACKET_SIZE)
     {
         return false;
     }
 
-    if (bufferSize < PACKET_SIZE)
+    if (packet.type != Telemetry::Type::POSITION)
     {
         return false;
     }
 
     size_t index = 0;
 
-    // Byte 0: Version
+    // Common header
     buffer[index++] = packet.version;
-    //Serial.println(packet.version);
-
-    // Byte 1: Message type
     buffer[index++] = static_cast<uint8_t>(packet.type);
-    //Serial.println(static_cast<uint8_t>(packet.type));
+    WriteUint16BE(buffer, index, packet.sequence);
+    buffer[index++] = static_cast<uint8_t>(Telemetry::POSITION_PAYLOAD_SIZE);
 
-    // Byte 2: Flags
-    buffer[index++] = packet.flags;
-    //Serial.println(packet.flags);
+    // POSITION payload
+    uint8_t status = packet.status & ~Telemetry::RESERVED_MASK;
 
-    // Byte 3: Source
-    //
-    // Bits 0-1 = GPS source
-    // Bits 2-7 = reserved and forced to zero
-    //
-    uint8_t source =
-        static_cast<uint8_t>(packet.gpsSource)
-        & GPS_SOURCE_MASK;
+    if (packet.positionSource == Telemetry::PositionSource::SCX20)
+    {
+        status |= Telemetry::SOURCE_SCX20;
+    }
+    else
+    {
+        status &= static_cast<uint8_t>(~Telemetry::SOURCE_SCX20);
+    }
 
-    buffer[index++] = source;
-    Serial.print(" source ");
-    Serial.println(source);
+    buffer[index++] = status;
+    WriteUint32BE(buffer, index, packet.timestamp);
+    WriteInt32BE(buffer, index, packet.latitude);
+    WriteInt32BE(buffer, index, packet.longitude);
+    WriteUint16BE(buffer, index, packet.cog);
+    WriteUint16BE(buffer, index, packet.heading);
 
-    // Byte 4-5: Sequence
-    WriteUint16LE(
-        buffer,
-        index,
-        packet.sequence
-    );
-    
-    Serial.print(" Sequence ");
-    Serial.println(packet.sequence);
-
-    // Byte 6-9: Timestamp
-    WriteUint32LE(
-        buffer,
-        index,
-        packet.timestamp
-    );
-   // Serial.println(packet.timestamp);
-
-    // Byte 10-13: Latitude
-    WriteInt32LE(
-        buffer,
-        index,
-        packet.latitude
-    );
-    
-    //Serial.println(packet.latitude);
-
-    // Byte 14-17: Longitude
-    WriteInt32LE(
-        buffer,
-        index,
-        packet.longitude
-    );
-   // Serial.println(packet.longitude);
-
-    // Byte 18-19: COG
-    WriteUint16LE(
-        buffer,
-        index,
-        packet.cog
-    );
-
-    // Byte 20-21: Heading
-    WriteUint16LE(
-        buffer,
-        index,
-        packet.heading
-    );
+    // CRC covers Version through Payload.
+    const uint16_t crc = Crc16(buffer, index);
+    WriteUint16BE(buffer, index, crc);
 
     return index == PACKET_SIZE;
 }
-/*
-Byte   Size   Field
---------------------------------
-0      1      Version
-1      1      Type
-2      1      Flags
-3      1      GPS Source
-4-5    2      Sequence
-6-9    4      Timestamp
-10-13  4      Latitude
-14-17  4      Longitude
-18-19  2      COG
-20-21  2      Heading
---------------------------------
-       22     bytes total
-
-Scaling
---------------------------------
-Latitude  = degrees × 10,000,000
-Longitude = degrees × 10,000,000
-
-COG       = degrees × 100
-Heading   = degrees × 100
-*/

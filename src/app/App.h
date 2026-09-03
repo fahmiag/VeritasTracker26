@@ -6,6 +6,9 @@
 #include "../managers/GPSManager.h"
 #include "../managers/HeadingManager.h"
 
+#include "../managers/ConfigurationManager.h"
+
+
 // Drivers
 #include "../drivers/GPS/UBloxGNSS.h"
 #include "../drivers/CAN/SCX20CAN.h"
@@ -60,6 +63,8 @@ private:
     ButtonManager buttons_;
     GPSManager gpsManager_;
     HeadingManager headingManager_;
+    
+     ConfigurationManager configuration_;
 
     StatusLED statusLED_;
 
@@ -85,15 +90,16 @@ private:
 
     uint32_t lastTelemetryTime_;
 
-    #if DEBUG_SATELLITE_TX
-        static constexpr uint32_t TELEMETRY_INTERVAL_MS =5UL * 60UL * 1000UL;
-    #else
-        static constexpr uint32_t TELEMETRY_INTERVAL_MS =1UL * 60UL * 1000UL;
-    #endif
+    // #if DEBUG_SATELLITE_TX
+    //     static constexpr uint32_t TELEMETRY_INTERVAL_MS =5UL * 60UL * 1000UL;
+    // #else
+    //     static constexpr uint32_t TELEMETRY_INTERVAL_MS =1UL * 60UL * 1000UL;
+    // #endif
 
 
-
-    static constexpr uint32_t TELEMETRY_TIMEOUT_MS = 10UL * 60UL * 1000UL;
+    //TODO: Has code for Number of trial.
+    //for now set to minutes less than the interval
+    static constexpr uint32_t TELEMETRY_TIMEOUT_MS = 4UL * 60UL * 1000UL; //10UL
 
     bool SendTelemetry();
     bool telemetryStarted_;
