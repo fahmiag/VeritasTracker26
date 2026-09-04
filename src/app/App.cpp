@@ -8,20 +8,20 @@ TODO:
 [x] Micro SD CSV logger
 [x] OLED navigation/status pages
 
-[ ] SCX20 CAN
+[x] SCX20 CAN
 [ ] GPSManager source selection
-[ ] Navigation/Heading data structure
+[x] Navigation/Heading data structure
 [x] RockBLOCK satellite communication
 [ ] Main system state machine
 
 [x] Test Create new file every day
 [x] Pack Data
 [x] Send data over-the-air
-[ ] Read Heading from Furuno
-[ ] Read GPS from Furuno
+[x] Read Heading from Furuno
+[x] Read GPS from Furuno
 [ ] Add Buzzer to indicate Error
 [ ] Add Millis to Serial Monitor
-[ ] Add debug.h
+[x] Add debug.h
 */
 
 
@@ -38,11 +38,13 @@ TODO:
 // =====================================================
 
 App::App()
-    : scx20_(),
+    : configuration_(),
+      rockBlock_(),
+      scx20_(),
       ublox_(),
       sdLogger_(sdCard_),
       lastLogTime_(0),
-      satelliteManager_(rockBlock_),
+      satelliteManager_(rockBlock_, configuration_),
       gpsManager_(scx20_, ublox_),
       telemetryStarted_(false),
       lastTelemetryTime_(0)
@@ -85,9 +87,18 @@ void App::Begin()
     // {
     //     Serial.println("SCX-20: ERROR");
     // }
+    configuration_.Begin();
 
 
-    satelliteManager_.Begin();
+    if (satelliteManager_.Begin())
+    {
+        Serial.println("Satellite Manager : OK");
+    }
+    else
+    {
+        Serial.println("Satellite Manager: ERROR");
+    }
+
 
     //SendTestTelemetry();
 
@@ -356,72 +367,7 @@ void App::Run()
     }
 
 
-    // // -----------------------------------------
-    // // Print GPS information
-    // // -----------------------------------------
-
-    // // static uint32_t lastGPSPrint = 0;
-
-
-    // // if (
-    // //     now - lastGPSPrint >= 1000
-    // // )
-    // // {
-    // //     lastGPSPrint = now;
-
-
-    // //     if (positionValid)
-    // //     {
-    // //         Serial.print(
-    // //             "uBlox POS: "
-    // //         );
-
-
-    // //         Serial.print(
-    // //             position.latitude,
-    // //             6
-    // //         );
-
-
-    // //         Serial.print(
-    // //             ", "
-    // //         );
-
-
-    // //         Serial.print(
-    // //             position.longitude,
-    // //             6
-    // //         );
-
-
-    // //         Serial.print(
-    // //             "  SAT="
-    // //         );
-
-
-    // //         Serial.print(
-    // //             position.satellites
-    // //         );
-
-
-    // //         Serial.print(
-    // //             "  HDOP="
-    // //         );
-
-
-    // //         Serial.println(
-    // //             position.hdop
-    // //         );
-    // //     }
-    // //     else
-    // //     {
-    // //         Serial.println(
-    // //             "GPS: NO FIX"
-    // //         );
-    // //     }
-    // // }
-
-
+ 
     // // -----------------------------------------
     // // Logging
     // // -----------------------------------------

@@ -8,6 +8,10 @@
 #include "../data/PositionData.h"
 #include "../data/HeadingData.h"
 
+#include "managers/ConfigurationManager.h"
+#include "../protocol/ProtocolDecoder.h"
+#include "../protocol/ProtocolEncoder.h"
+
 #include "../config/Debug.h"
 
 class SatelliteManager
@@ -15,7 +19,8 @@ class SatelliteManager
 public:
 
     SatelliteManager(
-        RockBlockPlus9704& modem
+        RockBlockPlus9704& modem,
+        ConfigurationManager& configuration
     );
 
     bool Begin();
@@ -36,6 +41,10 @@ public:
 private:
 
     RockBlockPlus9704& modem_;
+    ConfigurationManager& configuration_;
+
+    Protocol::ProtocolDecoder decoder_;
+    uint8_t rxBuffer_[64];
 
     bool initialized_;
 
@@ -51,4 +60,18 @@ private:
     uint32_t lastTelemetryTime_;
 
     bool telemetryTimerStarted_;
+
+        void ProcessIncomingMessage();
+
+    void HandleSetInterval(
+        const Protocol::DecodedMessage& message
+    );
+
+    bool SendAck(
+        uint16_t sequence,
+        uint8_t acknowledgedType,
+        Protocol::AckResult result,
+        Protocol::AckError error
+    );
+
 };

@@ -43,6 +43,10 @@ public:
 
 private:
 
+    ConfigurationManager configuration_;
+
+
+
     PositionData position_;
     HeadingData heading_;
     // -----------------------------
@@ -64,7 +68,6 @@ private:
     GPSManager gpsManager_;
     HeadingManager headingManager_;
     
-     ConfigurationManager configuration_;
 
     StatusLED statusLED_;
 

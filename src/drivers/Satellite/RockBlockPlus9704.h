@@ -42,6 +42,14 @@ public:
         rbMsgStatus_t status
     );
 
+    bool ReceiveBinary(
+        uint8_t* buffer,
+        size_t bufferSize,
+        size_t& receivedLength
+    );
+
+    bool HasIncomingMessage() const;
+
   
 
 private:
@@ -62,4 +70,11 @@ private:
     
 
     static constexpr uint32_t BAUD_RATE = 230400;
+
+    static void OnMtMessageComplete(
+        const uint16_t id,
+        const rbMsgStatus_t status
+    );
+
+    static bool mtMessagePending_;
 };
