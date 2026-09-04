@@ -5,31 +5,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "ProtocolConfig.h"
+
 namespace Protocol
 {
-
-// ============================================================
-// Protocol constants
-// ============================================================
-
-constexpr uint8_t VERSION = 0x01;
-
-// Message types
-constexpr uint8_t TYPE_POSITION    = 0x01;
-constexpr uint8_t TYPE_ACK         = 0x02;
-
-constexpr uint8_t TYPE_SET_INTERVAL = 0x80;
-
-// Packet sizes
-constexpr size_t HEADER_SIZE = 5;
-constexpr size_t CRC_SIZE    = 2;
-
-constexpr size_t SET_INTERVAL_PAYLOAD_SIZE = 2;
-constexpr size_t SET_INTERVAL_PACKET_SIZE =
-    HEADER_SIZE +
-    SET_INTERVAL_PAYLOAD_SIZE +
-    CRC_SIZE;
-
 
 // ============================================================
 // Decode errors

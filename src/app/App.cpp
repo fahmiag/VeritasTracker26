@@ -8,20 +8,20 @@ TODO:
 [x] Micro SD CSV logger
 [x] OLED navigation/status pages
 
-[x] SCX20 CAN
+[ ] SCX20 CAN
 [ ] GPSManager source selection
-[x] Navigation/Heading data structure
+[ ] Navigation/Heading data structure
 [x] RockBLOCK satellite communication
 [ ] Main system state machine
 
 [x] Test Create new file every day
 [x] Pack Data
 [x] Send data over-the-air
-[x] Read Heading from Furuno
-[x] Read GPS from Furuno
+[ ] Read Heading from Furuno
+[ ] Read GPS from Furuno
 [ ] Add Buzzer to indicate Error
 [ ] Add Millis to Serial Monitor
-[x] Add debug.h
+[ ] Add debug.h
 */
 
 
@@ -47,7 +47,8 @@ App::App()
       satelliteManager_(rockBlock_, configuration_),
       gpsManager_(scx20_, ublox_),
       telemetryStarted_(false),
-      lastTelemetryTime_(0)
+      lastTelemetryTime_(0),
+      timeOutReset_(false)
 {
 } 
 
@@ -68,14 +69,7 @@ void App::Begin()
     Serial.println(" GPS Tracker Starting");
     Serial.println("==============================");
     
-    if (rockBlock_.Begin())
-    {
-        Serial.println("RockBLOCK: OK");
-    }
-    else
-    {
-        Serial.println("RockBLOCK: ERROR");
-    }
+    // RockBLOCK is initialized by SatelliteManager.
 
     //Done By GPS Manager
     // if (scx20_.Begin())
@@ -87,7 +81,16 @@ void App::Begin()
     // {
     //     Serial.println("SCX-20: ERROR");
     // }
-    configuration_.Begin();
+    if (configuration_.Begin())
+    {
+        Serial.print("Configuration: OK, telemetry interval = ");
+        Serial.print(configuration_.GetReportingIntervalMinutes());
+        Serial.println(" minute(s)");
+    }
+    else
+    {
+        Serial.println("Configuration: ERROR, using defaults");
+    }
 
 
     if (satelliteManager_.Begin())
@@ -225,18 +228,6 @@ void App::Begin()
     statusLED_.SetMode(
         StatusLED::Mode::NORMAL
     );
-
-
-    if (configuration_.Begin())
-    {
-        Serial.print("Configuration: OK, telemetry interval = ");
-        Serial.print(configuration_.GetReportingIntervalMinutes());
-        Serial.println(" minute(s)");
-    }
-    else
-    {
-        Serial.println("Configuration: ERROR, using defaults");
-    }
 
     Serial.println("==============================");
     Serial.println("System ready");
@@ -413,8 +404,8 @@ void App::Run()
      sdLogger_.Update();
 
      
-    //put this at the bottom so that log and create file first
-    rockBlock_.Update();
+    // Put this at the bottom so that logging/file creation runs first.
+    // SatelliteManager owns RockBLOCK polling.
     satelliteManager_.Update();
 }
 

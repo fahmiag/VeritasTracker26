@@ -5,14 +5,6 @@
 RockBlockPlus9704*
 RockBlockPlus9704::instance_ = nullptr;
 
-rbCallbacks_t RockBlockPlus9704::callbacks_ =
-{
-    nullptr,
-    RockBlockPlus9704::OnMessageComplete,
-    nullptr,
-    nullptr,
-    nullptr
-};
 /*  callbacks_[0] → messageProvisioning
     callbacks_[1] → moMessageComplete
     callbacks_[2] → mtMessageComplete
@@ -280,17 +272,6 @@ void RockBlockPlus9704::OnMtMessageComplete(
     }
 }
 
-void RockBlockPlus9704::OnMtMessageComplete(
-    const uint16_t id,
-    const rbMsgStatus_t status)
-{
-    (void)id;
-
-    if (status == RB_MSG_STATUS_OK)
-    {
-        mtMessagePending_ = true;
-    }
-}
 
 bool RockBlockPlus9704::HasIncomingMessage() const
 {
