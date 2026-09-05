@@ -2,6 +2,7 @@
 
 bool ConfigurationManager::Begin()
 {
+    //Try to open NVS
     if (!preferences_.begin(NVS_NAMESPACE, false))
     {
         reportingIntervalMinutes_ = DEFAULT_REPORTING_INTERVAL_MIN;
@@ -9,11 +10,16 @@ bool ConfigurationManager::Begin()
         return false;
     }
 
+    //read the stored interval value
+    //unsigned 16-bit value stored under NVS_KEY_INTERVAL.
+    //the 2nd input param is default value (DEFAULT_REPORTING_INTERVAL_MIN)
     const uint16_t stored = preferences_.getUShort(
         NVS_KEY_INTERVAL,
         DEFAULT_REPORTING_INTERVAL_MIN
     );
 
+    //Validate data
+    //This prevents a corrupted or invalid configuration from producing an unreasonable reporting interval.
     if (stored > MAX_REPORTING_INTERVAL_MIN)
     {
         reportingIntervalMinutes_ = DEFAULT_REPORTING_INTERVAL_MIN;
@@ -57,6 +63,8 @@ bool ConfigurationManager::SetReportingIntervalMinutes(uint16_t minutes)
         return false;
     }
 
+    //if write success and number of byte written is uint16_t
+    //putUShort() returns the number of bytes written.
     return preferences_.putUShort(
         NVS_KEY_INTERVAL,
         reportingIntervalMinutes_

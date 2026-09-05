@@ -103,11 +103,6 @@ void App::Begin()
     }
 
 
-    //SendTestTelemetry();
-
-
-
-
     // -----------------------------------------
     // Display
     // -----------------------------------------
@@ -175,18 +170,18 @@ void App::Begin()
     // Heading Manager
     // -----------------------------------------
 
-    if (!headingManager_.Begin())
-    {
-        Serial.println(
-            "Heading Manager: ERROR"
-        );
-    }
-    else
-    {
-        Serial.println(
-            "Heading Manager: OK"
-        );
-    }
+    // if (!headingManager_.Begin())
+    // {
+    //     Serial.println(
+    //         "Heading Manager: ERROR"
+    //     );
+    // }
+    // else
+    // {
+    //     Serial.println(
+    //         "Heading Manager: OK"
+    //     );
+    // }
 
 
     // -----------------------------------------
@@ -225,9 +220,9 @@ void App::Begin()
     // Normal LED operation
     // -----------------------------------------
 
-    statusLED_.SetMode(
-        StatusLED::Mode::NORMAL
-    );
+    // statusLED_.SetMode(
+    //     StatusLED::Mode::NORMAL
+    // );
 
     Serial.println("==============================");
     Serial.println("System ready");
@@ -268,7 +263,7 @@ void App::Run()
     // // Heading
     // // -----------------------------------------
 
-    headingManager_.Update();
+  //  headingManager_.Update();
     
 
 
@@ -311,26 +306,27 @@ void App::Run()
     {
         telemetryStarted_ = false;
     }
-    else if (!telemetryStarted_)
+    else if (!telemetryStarted_) //TODO; set to send the first telemetry after 1 minutes, 
+                                 //need to wait for heading
     {
         if (position_.valid)
         {
-        if (SendTelemetry())
-        {
-            Serial.println(
-                "First telemetry queued successfully"
-            );
+            if (SendTelemetry())
+            {
+                Serial.println(
+                    "First telemetry queued successfully"
+                );
 
-            telemetryStarted_ = true;
-            lastTelemetryTime_ = now;
-            timeOutReset_ = false;
-        }
-        else
-        {
-            Serial.println(
-                "First telemetry FAILED"
-            );
-        }
+                telemetryStarted_ = true;
+                lastTelemetryTime_ = now;
+                timeOutReset_ = false;
+            }
+            else
+            {
+                Serial.println(
+                    "First telemetry FAILED"
+                );
+            }
         }
     }
     else if (now - lastTelemetryTime_ >= telemetryIntervalMs)
@@ -363,10 +359,7 @@ void App::Run()
     // // Logging
     // // -----------------------------------------
 
-    if (
-        now - lastLogTime_
-        >= LOG_INTERVAL_MS
-    )
+    if (now - lastLogTime_ >= LOG_INTERVAL_MS)
     {
         lastLogTime_ = now;
 
@@ -431,20 +424,25 @@ bool App::SendTelemetry()
 
     packet.status = 0;
 
-    if (position_.valid)
-    {
-        packet.status |= Telemetry::POSITION_VALID;
-    }
+    //TODO: try remove if (position_.valid)
 
-    if (position_.valid)
-    {
-        packet.status |= Telemetry::COG_VALID;
-    }
+    // if (position_.valid)
+    // {
+    //     packet.status |= Telemetry::POSITION_VALID;
+    // }
 
-    if (heading_.valid)
-    {
-        packet.status |= Telemetry::HEADING_VALID;
-    }
+    // if (position_.valid)
+    // {
+    //     packet.status |= Telemetry::COG_VALID;
+    // }
+
+    // if (heading_.valid)
+    // {
+    //     packet.status |= Telemetry::HEADING_VALID;
+    // }
+    packet.status |= Telemetry::POSITION_VALID;
+    packet.status |= Telemetry::COG_VALID;
+    packet.status |= Telemetry::HEADING_VALID;
 
     if (position_.year >= 1970 &&
         position_.month >= 1 && position_.month <= 12 &&
@@ -484,8 +482,8 @@ bool App::SendTelemetry()
         );
 
         //debug
-         Serial.print("[APP]  HeadingData: ");
-         Serial.println(heading_.heading, 3);
+        //  Serial.print("[APP]  HeadingData: ");
+        //  Serial.println(heading_.heading, 3);
 
     packet.heading =
         static_cast<uint16_t>(
@@ -494,8 +492,8 @@ bool App::SendTelemetry()
 
 
         //debug
-         Serial.print("[APP] TX Heading: ");
-          Serial.println(packet.heading, 3);
+        //  Serial.print("[APP] TX Heading: ");
+        //   Serial.println(packet.heading, 3);
 
     return satelliteManager_.SendTelemetry(packet);
 }

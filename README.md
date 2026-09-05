@@ -1,5 +1,18 @@
 This code running on VS Code + Platform IO
 
+=============
+Python Tools
+=============
+Decode telemetry HEX 
+> python tools/decode_telemetry_V1.py
+
+> python tools/protocol_tool.py decode-base64 AYAABwIAHqDz
+> python tools/protocol_tool.py decode-hex 0180000702001EA0F3
+
+Cloudloop MT payload:
+> python tools/protocol_tool.py set-interval 30 --sequence 7 
+Set 30 minutes interval with sequence 7
+calculate CRC, HEX and Base64
 
 -------------
 V0.1.0-dev

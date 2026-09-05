@@ -18,32 +18,37 @@ bool UBloxGNSS::Begin()
         PinMap::UBLOX_TX
     );
 
-    position_ = PositionData{};
+    position_ = PositionData{}; //Create NEW instance of PositionData name position_, 
+                                // Value initialized object, set all to init value/state (default)
+                                //use for reset/clear the structure
 
     position_.source = PositionSource::UBLOX;
 
-    Serial.print("Position Source");
-    switch (position_.source)
-    {
-        case PositionSource::NONE:
-            Serial.println("NONE");
-            break;
+    // Serial.print("Position Source");
+    // switch (position_.source)
+    // {
+    //     case PositionSource::NONE:
+    //         Serial.println("NONE");
+    //         break;
 
-        case PositionSource::UBLOX:
-            Serial.println("UBLOX");
-            break;
+    //     case PositionSource::UBLOX:
+    //         Serial.println("UBLOX");
+    //         break;
 
-        case PositionSource::SCX20:
-            Serial.println("SCX20");
-            break;
+    //     case PositionSource::SCX20:
+    //         Serial.println("SCX20");
+    //         break;
 
-        default:
-            Serial.println("UNKNOWN");
-            break;
-    }
+    //     default:
+    //         Serial.println("UNKNOWN");
+    //         break;
+    // }
 
 
     return true;
+
+    //TODO: add return false. HOW?
+    //Check if serial string available, but this will block the code
 }
 
 
@@ -170,6 +175,8 @@ void UBloxGNSS::Update()
 
 }
 
+//position  - function parameter
+//position_ - UBloxGNSS class member
 
 bool UBloxGNSS::GetPosition(PositionData& position)
 {

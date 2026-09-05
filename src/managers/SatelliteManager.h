@@ -33,7 +33,7 @@ public:
 
     bool IsBusy() const; //TODO: Check do I use this anywhere
 
-    void SetTelemetryData(
+    void SetTelemetryData( //TODO: Check do I use this anywhere
         const PositionData& position,
         const HeadingData& heading
     );
