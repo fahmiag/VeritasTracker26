@@ -49,13 +49,15 @@ bool SCX20CAN::Begin()
     // MCP2515
     // -------------------------------------------------
 
-    while (CAN_OK != can_.begin(CAN_500KBPS))
+    //TODO: Do not use While.
+
+    if (CAN_OK != can_.begin(CAN_500KBPS))
     {
         Serial.println(
             "[SCX20] CAN BUS init failed"
         );
 
-        delay(100);
+        return false;
     }
 
     Serial.println(
@@ -430,7 +432,7 @@ void SCX20CAN::Parse127250(
             true;
 
         heading_.source =
-            HeadingSource::SCX20;
+            HeadingSource::SCX20;  //TODO: need this
 
         heading_.lastUpdate =
             millis();

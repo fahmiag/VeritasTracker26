@@ -17,6 +17,10 @@ bool StatusLED::Begin()
 
     lastToggleTime_ = millis();
 
+    SetMode(
+        StatusLED::Mode::NORMAL
+    );
+
     return true;
 }
 

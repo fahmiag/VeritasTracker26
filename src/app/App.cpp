@@ -8,17 +8,17 @@ TODO:
 [x] Micro SD CSV logger
 [x] OLED navigation/status pages
 
-[ ] SCX20 CAN
+[x] SCX20 CAN
 [ ] GPSManager source selection
-[ ] Navigation/Heading data structure
+[x] Navigation/Heading data structure
 [x] RockBLOCK satellite communication
 [ ] Main system state machine
 
 [x] Test Create new file every day
 [x] Pack Data
 [x] Send data over-the-air
-[ ] Read Heading from Furuno
-[ ] Read GPS from Furuno
+[x] Read Heading from Furuno
+[x] Read GPS from Furuno
 [ ] Add Buzzer to indicate Error
 [ ] Add Millis to Serial Monitor
 [ ] Add debug.h
@@ -38,14 +38,17 @@ TODO:
 // =====================================================
 
 App::App()
-    : scx20_(),
+    : configuration_(),
+      rockBlock_(),
+      scx20_(),
       ublox_(),
       sdLogger_(sdCard_),
       lastLogTime_(0),
-      satelliteManager_(rockBlock_),
+      satelliteManager_(rockBlock_, configuration_),
       gpsManager_(scx20_, ublox_),
       telemetryStarted_(false),
-      lastTelemetryTime_(0)
+      lastTelemetryTime_(0),
+      timeOutReset_(false)
 {
 } 
 
@@ -66,14 +69,7 @@ void App::Begin()
     Serial.println(" GPS Tracker Starting");
     Serial.println("==============================");
     
-    if (rockBlock_.Begin())
-    {
-        Serial.println("RockBLOCK: OK");
-    }
-    else
-    {
-        Serial.println("RockBLOCK: ERROR");
-    }
+    // RockBLOCK is initialized by SatelliteManager.
 
     //Done By GPS Manager
     // if (scx20_.Begin())
@@ -85,13 +81,26 @@ void App::Begin()
     // {
     //     Serial.println("SCX-20: ERROR");
     // }
+    if (configuration_.Begin())
+    {
+        Serial.print("Configuration: OK, telemetry interval = ");
+        Serial.print(configuration_.GetReportingIntervalMinutes());
+        Serial.println(" minute(s)");
+    }
+    else
+    {
+        Serial.println("Configuration: ERROR, using defaults");
+    }
 
 
-    satelliteManager_.Begin();
-
-    //SendTestTelemetry();
-
-
+    if (satelliteManager_.Begin())
+    {
+        Serial.println("Satellite Manager : OK");
+    }
+    else
+    {
+        Serial.println("Satellite Manager: ERROR");
+    }
 
 
     // -----------------------------------------
@@ -161,18 +170,18 @@ void App::Begin()
     // Heading Manager
     // -----------------------------------------
 
-    if (!headingManager_.Begin())
-    {
-        Serial.println(
-            "Heading Manager: ERROR"
-        );
-    }
-    else
-    {
-        Serial.println(
-            "Heading Manager: OK"
-        );
-    }
+    // if (!headingManager_.Begin())
+    // {
+    //     Serial.println(
+    //         "Heading Manager: ERROR"
+    //     );
+    // }
+    // else
+    // {
+    //     Serial.println(
+    //         "Heading Manager: OK"
+    //     );
+    // }
 
 
     // -----------------------------------------
@@ -211,10 +220,9 @@ void App::Begin()
     // Normal LED operation
     // -----------------------------------------
 
-    statusLED_.SetMode(
-        StatusLED::Mode::NORMAL
-    );
-
+    // statusLED_.SetMode(
+    //     StatusLED::Mode::NORMAL
+    // );
 
     Serial.println("==============================");
     Serial.println("System ready");
@@ -255,7 +263,7 @@ void App::Run()
     // // Heading
     // // -----------------------------------------
 
-    headingManager_.Update();
+  //  headingManager_.Update();
     
 
 
@@ -291,31 +299,39 @@ void App::Run()
         position_
     );
 
-    if (!telemetryStarted_)
+    const uint32_t telemetryIntervalMs =
+        configuration_.GetReportingIntervalMs();
+
+    if (telemetryIntervalMs == 0)
+    {
+        telemetryStarted_ = false;
+    }
+    else if (!telemetryStarted_) //TODO; set to send the first telemetry after 1 minutes, 
+                                 //need to wait for heading
     {
         if (position_.valid)
         {
-        if (SendTelemetry())
-        {
-            Serial.println(
-                "First telemetry queued successfully"
-            );
+            if (SendTelemetry())
+            {
+                Serial.println(
+                    "First telemetry queued successfully"
+                );
 
-            telemetryStarted_ = true;
-            lastTelemetryTime_ = now;
-            timeOutReset_ = false;
-        }
-        else
-        {
-            Serial.println(
-                "First telemetry FAILED"
-            );
-        }
+                telemetryStarted_ = true;
+                lastTelemetryTime_ = now;
+                timeOutReset_ = false;
+            }
+            else
+            {
+                Serial.println(
+                    "First telemetry FAILED"
+                );
+            }
         }
     }
-    else if (now - lastTelemetryTime_ >= TELEMETRY_INTERVAL_MS)
+    else if (now - lastTelemetryTime_ >= telemetryIntervalMs)
     {
-        Serial.println("\n5-minute telemetry interval reached");
+        Serial.println("\nTelemetry interval reached");
 
         if (SendTelemetry())
         {
@@ -338,84 +354,17 @@ void App::Run()
     }
 
 
-    // // -----------------------------------------
-    // // Print GPS information
-    // // -----------------------------------------
-
-    // // static uint32_t lastGPSPrint = 0;
-
-
-    // // if (
-    // //     now - lastGPSPrint >= 1000
-    // // )
-    // // {
-    // //     lastGPSPrint = now;
-
-
-    // //     if (positionValid)
-    // //     {
-    // //         Serial.print(
-    // //             "uBlox POS: "
-    // //         );
-
-
-    // //         Serial.print(
-    // //             position.latitude,
-    // //             6
-    // //         );
-
-
-    // //         Serial.print(
-    // //             ", "
-    // //         );
-
-
-    // //         Serial.print(
-    // //             position.longitude,
-    // //             6
-    // //         );
-
-
-    // //         Serial.print(
-    // //             "  SAT="
-    // //         );
-
-
-    // //         Serial.print(
-    // //             position.satellites
-    // //         );
-
-
-    // //         Serial.print(
-    // //             "  HDOP="
-    // //         );
-
-
-    // //         Serial.println(
-    // //             position.hdop
-    // //         );
-    // //     }
-    // //     else
-    // //     {
-    // //         Serial.println(
-    // //             "GPS: NO FIX"
-    // //         );
-    // //     }
-    // // }
-
-
+ 
     // // -----------------------------------------
     // // Logging
     // // -----------------------------------------
 
-    if (
-        now - lastLogTime_
-        >= LOG_INTERVAL_MS
-    )
+    if (now - lastLogTime_ >= LOG_INTERVAL_MS)
     {
         lastLogTime_ = now;
 
 
+        //TODO: Add heading not valid
         if (gpsManager_.GetHeading(heading_)) //do not delete
         {
             #if DEBUG_SCX20_HDG
@@ -426,7 +375,9 @@ void App::Run()
         }
         else
         {
-            Serial.println("[APP] No valid heading");
+            #if DEBUG_SCX20_HDG
+                Serial.println("[APP] No valid heading");
+            #endif
         }
 
 
@@ -449,8 +400,8 @@ void App::Run()
      sdLogger_.Update();
 
      
-    //put this at the bottom so that log and create file first
-    rockBlock_.Update();
+    // Put this at the bottom so that logging/file creation runs first.
+    // SatelliteManager owns RockBLOCK polling.
     satelliteManager_.Update();
 }
 
@@ -474,20 +425,39 @@ bool App::SendTelemetry()
             Telemetry::Type::POSITION;
    
 
-    packet.flags =
-        Telemetry::NONE;
+    packet.status = 0;
 
-    if (position_.valid)
+    //TODO: try remove if (position_.valid)
+
+    // if (position_.valid)
+    // {
+    //     packet.status |= Telemetry::POSITION_VALID;
+    // }
+
+    // if (position_.valid)
+    // {
+    //     packet.status |= Telemetry::COG_VALID;
+    // }
+
+    // if (heading_.valid)
+    // {
+    //     packet.status |= Telemetry::HEADING_VALID;
+    // }
+    packet.status |= Telemetry::POSITION_VALID;
+    packet.status |= Telemetry::COG_VALID;
+    packet.status |= Telemetry::HEADING_VALID;
+
+    if (position_.year >= 1970 &&
+        position_.month >= 1 && position_.month <= 12 &&
+        position_.day >= 1 && position_.day <= 31)
     {
-        packet.flags |=
-            Telemetry::GPS_VALID;
+        packet.status |= Telemetry::TIME_VALID;
     }
 
-    if (heading_.valid)
-    {
-        packet.flags |=
-            Telemetry::HEADING_VALID;
-    }
+    packet.positionSource =
+        (position_.source == PositionSource::SCX20)
+            ? Telemetry::PositionSource::SCX20
+            : Telemetry::PositionSource::UBLOX;
 
     packet.timestamp =
         DateTimeToUnix(
@@ -515,22 +485,18 @@ bool App::SendTelemetry()
         );
 
         //debug
-         Serial.print("[APP]  HeadingData: ");
-         Serial.println(heading_.heading, 3);
+        //  Serial.print("[APP]  HeadingData: ");
+        //  Serial.println(heading_.heading, 3);
 
     packet.heading =
         static_cast<uint16_t>(
             heading_.heading * 100.0
         );
 
-    if (heading_.valid)
-    {
-        packet.flags |= (1 << 2);
-    }
 
         //debug
-         Serial.print("[APP] TX Heading: ");
-          Serial.println(packet.heading, 3);
+        //  Serial.print("[APP] TX Heading: ");
+        //   Serial.println(packet.heading, 3);
 
     return satelliteManager_.SendTelemetry(packet);
 }

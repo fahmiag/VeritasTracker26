@@ -36,7 +36,7 @@ GPSManager::GPSManager(
 bool GPSManager::Begin()
 {
     bool scx20Ok = scx20_.Begin();
-    bool ubloxOk = ublox_.Begin();
+    bool ubloxOk = ublox_.Begin(); //never false
 
     Serial.println("[GPS] Starting GPS sources...");
 
@@ -45,7 +45,7 @@ bool GPSManager::Begin()
         scx20Ok ? "OK" : "FAILED"
     );
 
-    Serial.print("[GPS] u-blox: ");
+    Serial.print("[GPS] u-blox: ");  
     Serial.println(
         ubloxOk ? "OK" : "FAILED"
     );
@@ -90,7 +90,7 @@ bool GPSManager::GetPosition(
     // if (scx20_.GetPosition(scx20Position))
     // {
     //     uint32_t age =
-    //         millis() - scx20Position.lastUpdate;
+    //         millis() - scx20Position.lastUpdate;  
 
     //     if (age <= SCX20_POSITION_TIMEOUT_MS)
     //     {

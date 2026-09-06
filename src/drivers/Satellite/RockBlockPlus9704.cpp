@@ -5,14 +5,6 @@
 RockBlockPlus9704*
 RockBlockPlus9704::instance_ = nullptr;
 
-rbCallbacks_t RockBlockPlus9704::callbacks_ =
-{
-    nullptr,
-    RockBlockPlus9704::OnMessageComplete,
-    nullptr,
-    nullptr,
-    nullptr
-};
 /*  callbacks_[0] → messageProvisioning
     callbacks_[1] → moMessageComplete
     callbacks_[2] → mtMessageComplete
@@ -255,3 +247,99 @@ bool RockBlockPlus9704::WasLastSendSuccessful() const
     return lastSendSuccessful_;
 }
 
+
+//=========================================================
+rbCallbacks_t RockBlockPlus9704::callbacks_ =
+{
+    nullptr,
+    RockBlockPlus9704::OnMessageComplete,
+    RockBlockPlus9704::OnMtMessageComplete,
+    nullptr,
+    nullptr
+};
+
+bool RockBlockPlus9704::mtMessagePending_ = false;
+
+void RockBlockPlus9704::OnMtMessageComplete(
+    const uint16_t id,
+    const rbMsgStatus_t status)
+{
+    (void)id;
+
+    if (status == RB_MSG_STATUS_OK)
+    {
+        mtMessagePending_ = true;
+    }
+}
+
+
+bool RockBlockPlus9704::HasIncomingMessage() const
+{
+    return mtMessagePending_;
+}
+
+bool RockBlockPlus9704::ReceiveBinary(
+    uint8_t* buffer,
+    size_t bufferSize,
+    size_t& receivedLength)
+{
+    receivedLength = 0;
+
+    if (buffer == nullptr || bufferSize == 0)
+    {
+        return false;
+    }
+
+    char* messageBuffer = nullptr;
+
+    const size_t messageLength =
+        rbReceiveMessageAsync(&messageBuffer);
+
+    if (messageLength == 0 ||
+        messageBuffer == nullptr)
+    {
+        return false;
+    }
+
+    if (messageLength > bufferSize)
+    {
+        Serial.printf(
+            "[SAT] MT message too large: %u bytes\n",
+            static_cast<unsigned>(messageLength)
+        );
+
+        // Still acknowledge the message so it doesn't
+        // permanently occupy the receive queue.
+        rbAcknowledgeReceiveHeadAsync();
+
+        mtMessagePending_ = false;
+
+        return false;
+    }
+
+    memcpy(
+        buffer,
+        messageBuffer,
+        messageLength
+    );
+
+    receivedLength = messageLength;
+
+    // We have copied the message.
+    // Release the head of the modem receive queue.
+    const bool acknowledged =
+        rbAcknowledgeReceiveHeadAsync();
+
+    mtMessagePending_ = false;
+
+    if (!acknowledged)
+    {
+        Serial.println(
+            "[SAT] Failed to acknowledge MT message"
+        );
+
+        return false;
+    }
+
+    return true;
+}
