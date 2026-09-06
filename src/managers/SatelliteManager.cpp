@@ -58,7 +58,7 @@ bool SatelliteManager::SendTelemetry(
 
     Serial.println("[SAT] SendTelemetry() entered");
 
-   #if DEBUG_SATELLITE_TX
+   #if !DEBUG_SATELLITE_TX
         if (modem_.IsSending())
         {
             Serial.println("[SAT] ERROR: RockBLOCK still sending");
@@ -120,14 +120,14 @@ bool SatelliteManager::SendTelemetry(
     // Send binary packet
     // -------------------------------------------------
    #if DEBUG_SATELLITE_TX
+        Serial.println("SendBinary(): Dummy");
+        bool result =true;
+    #else
         bool result = modem_.SendBinary(
             RAW_TOPIC, //this is important
             buffer,
             TelemetryEncoder::PACKET_SIZE
         );
-    #else
-        Serial.println("SendBinary(): Dummy");
-        bool result =true;
     #endif
    
     //Debug ===============================================

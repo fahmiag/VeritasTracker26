@@ -1,4 +1,5 @@
 #include "ConfigurationManager.h"
+#include "../config/Debug.h"
 
 bool ConfigurationManager::Begin()
 {
@@ -28,6 +29,16 @@ bool ConfigurationManager::Begin()
     {
         reportingIntervalMinutes_ = stored;
     }
+
+    // Serial.print("reportingIntervalMinutes_: ");
+    // Serial.println(reportingIntervalMinutes_);
+
+    #if DEBUG_SATELLITE_TX
+        reportingIntervalMinutes_ = DEFAULT_REPORTING_INTERVAL_MIN;
+    #endif
+
+    // Serial.print("reportingIntervalMinutes_: ");
+    // Serial.println(reportingIntervalMinutes_);
 
     initialized_ = true;
     return true;

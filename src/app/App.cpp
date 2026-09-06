@@ -8,17 +8,17 @@ TODO:
 [x] Micro SD CSV logger
 [x] OLED navigation/status pages
 
-[ ] SCX20 CAN
+[x] SCX20 CAN
 [ ] GPSManager source selection
-[ ] Navigation/Heading data structure
+[x] Navigation/Heading data structure
 [x] RockBLOCK satellite communication
 [ ] Main system state machine
 
 [x] Test Create new file every day
 [x] Pack Data
 [x] Send data over-the-air
-[ ] Read Heading from Furuno
-[ ] Read GPS from Furuno
+[x] Read Heading from Furuno
+[x] Read GPS from Furuno
 [ ] Add Buzzer to indicate Error
 [ ] Add Millis to Serial Monitor
 [ ] Add debug.h
@@ -364,6 +364,7 @@ void App::Run()
         lastLogTime_ = now;
 
 
+        //TODO: Add heading not valid
         if (gpsManager_.GetHeading(heading_)) //do not delete
         {
             #if DEBUG_SCX20_HDG
@@ -374,7 +375,9 @@ void App::Run()
         }
         else
         {
-            Serial.println("[APP] No valid heading");
+            #if DEBUG_SCX20_HDG
+                Serial.println("[APP] No valid heading");
+            #endif
         }
 
 

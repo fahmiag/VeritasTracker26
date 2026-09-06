@@ -4,7 +4,7 @@
 #include "../managers/DisplayManager.h"
 #include "../managers/ButtonManager.h"
 #include "../managers/GPSManager.h"
-#include "../managers/HeadingManager.h"
+//#include "../managers/HeadingManager.h"
 
 #include "../managers/ConfigurationManager.h"
 
@@ -66,7 +66,7 @@ private:
     DisplayManager display_;
     ButtonManager buttons_;
     GPSManager gpsManager_;
-    HeadingManager headingManager_;
+    //HeadingManager headingManager_;
     
 
     StatusLED statusLED_;
