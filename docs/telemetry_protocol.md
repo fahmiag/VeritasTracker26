@@ -40,7 +40,8 @@ Payload length: **17 bytes**. Total packet: **24 bytes**.
 | 13–14 | 2 | COG | `uint16`, degrees × 100 |
 | 15–16 | 2 | Heading | `uint16`, degrees × 100 |
 
-### Position Status
+### Position Status 
+Temporary, Need to be finalized later.
 
 | Bit | Mask | Meaning |
 |---:|---:|---|
