@@ -100,14 +100,9 @@ private:
     // #endif
 
 
-<<<<<<< HEAD
-
-    static constexpr uint32_t TELEMETRY_TIMEOUT_MS = 4UL * 60UL * 1000UL;
-=======
     //TODO: Has code for Number of trial.
     //for now set to minutes less than the interval
     static constexpr uint32_t TELEMETRY_TIMEOUT_MS = 4UL * 60UL * 1000UL; //10UL
->>>>>>> OTA_Message
 
     bool SendTelemetry();
     bool telemetryStarted_;
