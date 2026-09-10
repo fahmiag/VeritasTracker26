@@ -37,20 +37,26 @@ namespace PinMap
 
 
      // -----------------------------
-    // SD Card - SPI
+    // Shared VSPI Bus
+    //
+    // Used by:
+    //   - SD Card
+    //   - MCP2515 CAN Controller
     // -----------------------------
-    constexpr uint8_t SD_SCK  = 18;
-    constexpr uint8_t SD_MISO = 19;
-    constexpr uint8_t SD_MOSI = 23;
-    constexpr uint8_t SD_CS   = 4;
+    constexpr uint8_t SPI_SCK  = 18;
+    constexpr uint8_t SPI_MISO = 19;
+    constexpr uint8_t SPI_MOSI = 23;
 
-    constexpr uint8_t SCX20_CAN_MOSI = 23;
-    constexpr uint8_t SCX20_CAN_MISO = 19;
-    constexpr uint8_t SCX20_CAN_SCK  = 18;
-    constexpr uint8_t SCX20_CAN_CS   = 5;
+    // ------------------------------------------------
+    // SD Card
+    // ------------------------------------------------
+    constexpr uint8_t SD_CS = 4;
 
+
+    // ------------------------------------------------
+    // MCP2515 CAN Controller
+    // ------------------------------------------------
+    constexpr uint8_t SCX20_CAN_CS = 5;
     
-    
-
 
 }

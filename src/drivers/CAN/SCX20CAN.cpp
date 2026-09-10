@@ -38,12 +38,12 @@ bool SCX20CAN::Begin()
     // -------------------------------------------------
 
     SPI.begin(
-        PinMap::SCX20_CAN_SCK,
-        PinMap::SCX20_CAN_MISO,
-        PinMap::SCX20_CAN_MOSI,
-        PinMap::SCX20_CAN_CS
+        PinMap::SPI_SCK,
+        PinMap::SPI_MISO,
+        PinMap::SPI_MOSI
     );
 
+    can_.setSPI(&SPI);
 
     // -------------------------------------------------
     // MCP2515

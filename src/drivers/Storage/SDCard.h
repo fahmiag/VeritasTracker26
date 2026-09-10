@@ -12,14 +12,13 @@ public:
 
     bool Begin();
     bool IsReady() const;
-    bool Exists(const char* path);
 
+    bool Exists(const char* path);
     bool CreateDirectory(const char* path);
 
     File OpenAppend(const char* path);
 
     bool Close(File& file);
-
     bool Flush(File& file);
 
     bool Write(File& file, const char* data);

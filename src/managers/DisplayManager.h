@@ -6,7 +6,6 @@
 
 #include "../data/PositionData.h"
 #include "../data/HeadingData.h"
-#include "../data/DisplayData.h"
 
 enum class DisplayScreen
 {

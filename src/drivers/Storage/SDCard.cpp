@@ -14,9 +14,9 @@ SDCard::SDCard()
 bool SDCard::Begin()
 {
     SPI.begin(
-        PinMap::SD_SCK,
-        PinMap::SD_MISO,
-        PinMap::SD_MOSI
+        PinMap::SPI_SCK,
+        PinMap::SPI_MISO,
+        PinMap::SPI_MOSI
         //PinMap::SD_CS
     );
 
