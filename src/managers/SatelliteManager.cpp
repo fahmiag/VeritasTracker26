@@ -363,3 +363,22 @@ bool SatelliteManager::SendAck(
         encodedLength
     );
 }
+
+bool SatelliteManager::IsReady() const
+{
+    return initialized_ &&
+           modem_.IsReady();
+}
+
+
+bool SatelliteManager::IsSending() const
+{
+    return modem_.IsSending();
+}
+
+
+bool SatelliteManager::
+WasLastSendSuccessful() const
+{
+    return modem_.WasLastSendSuccessful();
+}

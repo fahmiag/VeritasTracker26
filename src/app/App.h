@@ -49,6 +49,9 @@ private:
 
     PositionData position_;
     HeadingData heading_;
+
+    SDStatus sdStatus_;
+    SatelliteStatus satelliteStatus_;
     // -----------------------------
     // Hardware drivers
     // -----------------------------

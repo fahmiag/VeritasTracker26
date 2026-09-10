@@ -47,7 +47,7 @@ public:
 
 private:
 
-    SPIClass spi_;
+    //SPIClass spi_;
 
     bool ready_;
 

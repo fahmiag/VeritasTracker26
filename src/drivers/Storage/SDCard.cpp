@@ -4,7 +4,7 @@
 
 
 SDCard::SDCard()
-    : spi_(VSPI),
+    : //spi_(VSPI),
       ready_(false),
       csPin_(PinMap::SD_CS)
 {
@@ -13,20 +13,19 @@ SDCard::SDCard()
 
 bool SDCard::Begin()
 {
-    spi_.begin(
+    SPI.begin(
         PinMap::SD_SCK,
         PinMap::SD_MISO,
-        PinMap::SD_MOSI,
-        PinMap::SD_CS
+        PinMap::SD_MOSI
+        //PinMap::SD_CS
     );
 
 
-    if (!SD.begin(csPin_, spi_))
+    if (!SD.begin(csPin_, SPI))
     {
         Serial.println("SD: initialization failed");
 
         ready_ = false;
-
         return false;
     }
 
@@ -38,7 +37,6 @@ bool SDCard::Begin()
         Serial.println("SD: no card detected");
 
         ready_ = false;
-
         return false;
     }
 

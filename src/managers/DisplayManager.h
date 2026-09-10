@@ -2,7 +2,11 @@
 
 #include "../drivers/Display/OLED.h"
 #include "../drivers/Button/Buttons.h"
+#include "../drivers/Storage/SDCard.h"
+
 #include "../data/PositionData.h"
+#include "../data/HeadingData.h"
+#include "../data/DisplayData.h"
 
 enum class DisplayScreen
 {
@@ -15,6 +19,21 @@ enum class DisplayScreen
     SETTINGS
 };
 
+struct SDStatus
+{
+    bool ready = false;
+    bool logging = false;
+};
+
+struct SatelliteStatus
+{
+    bool ready = false;
+    bool sending = false;
+    bool lastTxSuccess = false;
+
+    int8_t signal = -1;
+};
+
 
 class DisplayManager
 {
@@ -25,8 +44,13 @@ public:
     //void Update(ButtonEvent event);
     void Update(
         ButtonEvent event,
-        const PositionData& position
+        const PositionData& position,
+        const HeadingData& heading,
+        const SDStatus& sd,
+        const SatelliteStatus& satellite
     );
+
+    
     
 
     DisplayScreen GetScreen();
@@ -52,6 +76,10 @@ private:
     // ---------------------------------
 
     PositionData position_;
+    HeadingData heading_;
+
+    SDStatus sd_;
+    SatelliteStatus satellite_;
 
 
     // ---------------------------------
@@ -101,7 +129,7 @@ private:
     void WakeDisplay();
     void SleepDisplay();
 
-    void ResetActivityTimer();
+
     void CheckDisplayTimeout();
 
     

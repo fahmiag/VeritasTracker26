@@ -38,6 +38,11 @@ public:
         const HeadingData& heading
     );
 
+    // Status
+    bool IsReady() const;
+    bool IsSending() const;
+    bool WasLastSendSuccessful() const;
+
 private:
 
     RockBlockPlus9704& modem_;

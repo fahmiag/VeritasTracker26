@@ -362,3 +362,8 @@ void SDLogger::CloseCurrentFile()
         Serial.println("SDLogger: log file closed");
     }
 }
+
+bool SDLogger::IsReady() const
+{
+    return ready_;
+}

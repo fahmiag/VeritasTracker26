@@ -11,6 +11,9 @@ bool DisplayManager::Begin()
 
 
     position_ = PositionData{};
+    heading_ = HeadingData{};
+    sd_ = SDStatus{};
+    satellite_ = SatelliteStatus{};
 
 
     currentScreen_ =
@@ -21,6 +24,8 @@ bool DisplayManager::Begin()
     displayActive_ = true;
 
     lastActivityTime_ = millis();
+
+
 
 
     DrawScreen();
@@ -36,30 +41,28 @@ bool DisplayManager::Begin()
 
 void DisplayManager::Update(
     ButtonEvent event,
-    const PositionData& position)
+    const PositionData& position,
+    const HeadingData& heading,
+    const SDStatus& sd,
+    const SatelliteStatus& satellite
+)
 {
-    // -----------------------------------------
-    // Store latest GPS data
-    // -----------------------------------------
-    position_ = position;
+    // Store latest data
+    position_  = position;
+    heading_   = heading;
+    sd_        = sd;
+    satellite_ = satellite;
 
-    // -----------------------------------------
     // Check OLED timeout
-    // -----------------------------------------
     CheckDisplayTimeout();
     UpdateDisplay();
 
-    // -----------------------------------------
     // No button event
-    // -----------------------------------------
-    if (event == ButtonEvent::NONE)
+    if (event == ButtonEvent::NONE) 
     {
         return;
     }
-
     
-
-
     // -----------------------------------------
     // OLED currently OFF
     // -----------------------------------------
@@ -85,8 +88,8 @@ void DisplayManager::Update(
     // Display already active
     // -----------------------------------------
 
-    ResetActivityTimer();
-
+    //ResetActivityTimer(); //Need this?
+    lastActivityTime_ = millis();
     
     HandleEvent(event);
 }
@@ -111,15 +114,6 @@ void DisplayManager::UpdateDisplay()
     }
 }
 
-// =====================================================
-// Activity Timer
-// =====================================================
-
-void DisplayManager::ResetActivityTimer()
-{
-    lastActivityTime_ =
-        millis();
-}
 
 
 // =====================================================
@@ -426,87 +420,111 @@ void DisplayManager::DrawMainScreen()
     oled_.DrawText(0, 0, "VERITAS TRACKER");
     oled_.DrawLine(0, 10, 127, 10);
 
+    
+    // UTC time
+    char buffer[32];
+
+    snprintf(
+        buffer,
+        sizeof(buffer),
+        "%02d:%02d:%02d %02d-%02d-%04d",
+        position_.hour,
+        position_.minute,
+        position_.second,
+        position_.day,
+        position_.month,
+        position_.year
+    );
+
+    oled_.DrawText( 0, 16,buffer);
+
+
     // -----------------------------------------
     // GPS Fix
     // -----------------------------------------
 
-    oled_.DrawText( 0, 16, "GPS:" );
+    oled_.DrawText( 0, 26, "GPS:" );
 
     if (position_.valid)
     {
-        oled_.DrawText( 30, 16, "FIX");
+        oled_.DrawText( 30, 26, "FIX");
     }
     else
     {
-        oled_.DrawText( 30, 16, "NO FIX");
+        oled_.DrawText( 30, 26, "NO ");
     }
 
 
-    // -----------------------------------------
-    // Satellites
-    // -----------------------------------------
-
-    oled_.DrawText(0, 28, "SAT:");
-
-
-    char satText[16];
-
-    snprintf(
-        satText,
-        sizeof(satText),
-        "%u",
-        position_.satellites
-    );
-
-    oled_.DrawText(30, 28, satText);
 
 
     // -----------------------------------------
-    // HDOP
+    // HEADING
     // -----------------------------------------
 
-    oled_.DrawText(0, 40, "HDOP:" );
+    oled_.DrawText(0, 36, "HDG:" );
 
-    char hdopText[16];
-
-    snprintf(
-        hdopText,
-        sizeof(hdopText),
-        "%.2f",
-        position_.hdop
-    );
-
-
-    oled_.DrawText( 38, 40, hdopText );
-
-
-    // -----------------------------------------
-    // Position source
-    // -----------------------------------------
-
-    oled_.DrawText(0, 52, "SRC:");
-
-    switch (position_.source)
+    if (heading_.valid)
     {
-        case PositionSource::UBLOX:
+        snprintf(
+            buffer,
+            sizeof(buffer),
+            "%.1f",
+            heading_.heading
+        );
 
-            oled_.DrawText(30, 52, "UBLOX");
-            break;
-
-
-        case PositionSource::SCX20:
-
-            oled_.DrawText(30, 52, "SCX-20");
-            break;
-
-
-        default:
-
-            oled_.DrawText(30, 52, "NONE");
-            break;
+        oled_.DrawText(30, 36, buffer);
     }
-}
+    else
+    {
+        oled_.DrawText(30, 36, "---");
+    }
 
+    
+    // -----------------------------------------
+    // SD Card
+    // -----------------------------------------
+
+    oled_.DrawText(0, 46, "SD :" );
+
+    if (sd_.ready)
+    {
+        oled_.DrawText( 30, 46, "OK");
+    }
+    else
+    {
+        oled_.DrawText( 30, 46, "ERROR");
+    }
+
+        // Satellite
+    oled_.DrawText(70, 46, "SAT:");
+
+    if (satellite_.sending)
+    {
+        oled_.DrawText(100, 46, "TX");
+    }
+    else if (satellite_.ready)
+    {
+        oled_.DrawText(100, 46, "OK");
+    }
+    else
+    {
+        oled_.DrawText(100, 46, "NO");
+    }
+
+
+    //GPS satellites / satellite signal
+    snprintf(
+        buffer,
+        sizeof(buffer),
+        "GPS:%d  SATSIG:%d",
+        position_.satellites,
+        satellite_.signal
+    );
+
+    oled_.DrawText(0, 56, buffer);
+
+
+}
 
 // =====================================================
 // Menu
@@ -600,7 +618,7 @@ void DisplayManager::DrawMenu()
 
 void DisplayManager::DrawGPSStatus()
 {
-    oled_.DrawText(0, 0, "GPS STATUS");
+    oled_.DrawText(0, 0, "GPS 1 STATUS");
     oled_.DrawLine(0, 10, 127, 10);
 
     // -----------------------------------------
@@ -692,44 +710,50 @@ void DisplayManager::DrawGPSStatus()
 
 void DisplayManager::DrawHeadingStatus()
 {
-    oled_.DrawText(
-        0,
-        0,
-        "HEADING"
-    );
+    oled_.DrawText(0, 0, "HEADING");
+    oled_.DrawLine(0, 10, 127, 10);
 
-    oled_.DrawLine(
-        0,
-        10,
-        127,
-        10
-    );
+    char buffer[32];
+
+    // Heading
+    if (heading_.valid)
+    {
+        snprintf(
+            buffer,
+            sizeof(buffer),
+            "HEADING: %.1f",
+            heading_.heading
+        );
+    }
+    else
+    {
+        snprintf(
+            buffer,
+            sizeof(buffer),
+            "HEADING: ---"
+        );
+    }
+
+    oled_.DrawText(0, 16, buffer);
 
 
-    oled_.DrawText(
-        0,
-        16,
-        "HEADING:"
-    );
-
-    oled_.DrawText(
-        70,
-        16,
-        "123.4"
-    );
+    // Status
+    if (heading_.valid)
+    {
+        oled_.DrawText(0, 28, "STATUS: OK");
+    }
+    else
+    {
+        oled_.DrawText(0, 28, "STATUS: INVALID");
+    }
 
 
-    oled_.DrawText(
-        0,
-        28,
-        "STATUS: OK"
-    );
 
 
     oled_.DrawText(
         0,
         40,
-        "SCX20"
+        "SENSOR: SCX20"
     );
 }
 
@@ -740,46 +764,88 @@ void DisplayManager::DrawHeadingStatus()
 
 void DisplayManager::DrawSatelliteStatus()
 {
-    oled_.DrawText(
-        0,
-        0,
-        "SATELLITE"
-    );
-
-    oled_.DrawLine(
-        0,
-        10,
-        127,
-        10
-    );
-
+    oled_.DrawText(0, 0, "SATELLITE");
+    oled_.DrawLine(0, 10, 127, 10);
 
     oled_.DrawText(
         0,
         16,
-        "RockBLOCK"
+        "RockBLOCK 9704"
     );
 
-    oled_.DrawText(
-        0,
-        28,
-        "STATUS: READY"
-    );
+    // Current state
+    if (satellite_.sending)
+    {
+        oled_.DrawText(
+            0,
+            28,
+            "STATUS: SENDING"
+        );
+    }
+    else if (satellite_.ready)
+    {
+        oled_.DrawText(
+            0,
+            28,
+            "STATUS: READY"
+        );
+    }
+    else
+    {
+        oled_.DrawText(
+            0,
+            28,
+            "STATUS: OFFLINE"
+        );
+    }
 
-    oled_.DrawText(
-        0,
-        40,
-        "LAST TX: OK"
-    );
+
+    // Last transmission
+    if (satellite_.lastTxSuccess)
+    {
+        oled_.DrawText(
+            0,
+            40,
+            "LAST TX: OK"
+        );
+    }
+    else
+    {
+        oled_.DrawText(
+            0,
+            40,
+            "LAST TX: FAIL"
+        );
+    }
+
+
+    // Signal
+    char buffer[24];
+
+    if (satellite_.signal >= 0)
+    {
+        snprintf(
+            buffer,
+            sizeof(buffer),
+            "SIGNAL: %d/5",
+            satellite_.signal
+        );
+    }
+    else
+    {
+        snprintf(
+            buffer,
+            sizeof(buffer),
+            "SIGNAL: ---"
+        );
+    }
 
     oled_.DrawText(
         0,
         52,
-        "NEXT TX: 42s"
+        buffer
     );
 }
-
-
 // =====================================================
 // SD Status
 // =====================================================
@@ -800,23 +866,40 @@ void DisplayManager::DrawSDStatus()
     );
 
 
-    oled_.DrawText(
-        0,
-        16,
-        "STATUS: OK"
-    );
+    if (sd_.ready)
+    {
+        oled_.DrawText(
+            0,
+            16,
+            "STATUS: OK"
+        );
+    }
+    else
+    {
+        oled_.DrawText(
+            0,
+            16,
+            "STATUS: ERROR"
+        );
+    }
 
-    oled_.DrawText(
-        0,
-        28,
-        "LOGGING: ON"
-    );
 
-    oled_.DrawText(
-        0,
-        40,
-        "FILE: DAILY"
-    );
+    if (sd_.logging)
+    {
+        oled_.DrawText(
+            0,
+            28,
+            "LOGGER: READY"
+        );
+    }
+    else
+    {
+        oled_.DrawText(
+            0,
+            28,
+            "LOGGER: OFF"
+        );
+    }
 }
 
 

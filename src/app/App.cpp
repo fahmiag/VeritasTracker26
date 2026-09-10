@@ -72,7 +72,7 @@ void App::Begin()
     // RockBLOCK is initialized by SatelliteManager.
 
     //Done By GPS Manager
-    // if (scx20_.Begin())
+    // if (scx20_.Begin()) 
     // {
     //     Serial.println("SCX-20: OK");
 
@@ -289,6 +289,25 @@ void App::Run()
     ButtonEvent buttonEvent =
         buttons_.GetEvent();
 
+    // -----------------------------------------
+    // Display status data
+    // -----------------------------------------
+
+    sdStatus_.ready = sdCard_.IsReady();
+
+    sdStatus_.logging = sdLogger_.IsReady();
+
+    satelliteStatus_.ready =
+        satelliteManager_.IsReady();
+
+    satelliteStatus_.sending =
+        satelliteManager_.IsSending();
+
+    satelliteStatus_.lastTxSuccess =
+        satelliteManager_.WasLastSendSuccessful();
+
+    satelliteStatus_.signal = -1; //current RockBLOCK wrapper does not expose signal strength yet.
+
 
     // // -----------------------------------------
     // // OLED
@@ -296,7 +315,10 @@ void App::Run()
 
     display_.Update(
         buttonEvent,
-        position_
+        position_,
+        heading_,
+        sdStatus_,
+        satelliteStatus_
     );
 
     const uint32_t telemetryIntervalMs =

@@ -89,7 +89,7 @@ bool RockBlockPlus9704::SendText(
         return false;
     }
 
-    if (sending_)  //TODO: check where sending_false
+    if (sending_)  //TODO: check where sending_false, Timeout
     {
         Serial.println(
             "RockBLOCK: already sending"
@@ -123,6 +123,8 @@ bool RockBlockPlus9704::SendText(
         Serial.println(
             "RockBLOCK: message queued"
         );
+
+        sendStartTime_ = millis();
     }
     else
     {
@@ -221,6 +223,7 @@ void RockBlockPlus9704::OnMessageComplete(  //TODO: Check who call this
     }
     else
     {
+        //WHAT is the difference between these 2 variable?
         instance_->sendSuccess_ = false;
         instance_->lastSendSuccessful_ = false;
 
