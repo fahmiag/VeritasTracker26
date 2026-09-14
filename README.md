@@ -151,8 +151,8 @@ V0.2.0-dev
 TODO
 =============
 - Set GPS source to uBlox
-- Set retry time for unsend message
-- dont increase sequence number when message not sent.
+- Set retry time for un-send message
+- Don't increase sequence number when message not sent.
 - Add Panic Button alert and Voltage low alert
 - Add Panic button status and Voltage value to position payload
 
@@ -160,6 +160,9 @@ TODO
 
 Tracking open bugs found during code review:
 
-- [ ] SCX-20 CAN string too much, high trafic. Try to reduce it.
+- [ ] SCX-20 CAN string too much, high traffic. Try to reduce it.
 - [ ] MicroSD Card not working
 
+PCB Design and Old Code
+=============
+https://drive.google.com/drive/folders/1Njo9VfFiR545hyBnEeSCKGuD_9vqP8z4?usp=sharing

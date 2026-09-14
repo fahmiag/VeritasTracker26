@@ -34,14 +34,24 @@ bool SCX20CAN::Begin()
 
 
     // -------------------------------------------------
-    // SPI
+    // MCP2515 Chip Select
+    //
+    // Shared SPI bus itself is initialized
+    // by App::Begin().
     // -------------------------------------------------
-
-    SPI.begin(
-        PinMap::SPI_SCK,
-        PinMap::SPI_MISO,
-        PinMap::SPI_MOSI
+    pinMode(
+        PinMap::SCX20_CAN_CS,
+        OUTPUT
     );
+
+    digitalWrite(
+        PinMap::SCX20_CAN_CS,
+        HIGH
+    );
+    
+    // -------------------------------------------------
+    // Explicitly use global shared SPI bus
+    // -------------------------------------------------
 
     can_.setSPI(&SPI);
 

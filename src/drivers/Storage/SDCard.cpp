@@ -2,41 +2,50 @@
 
 #include "../../config/PinMap.h"
 
-
+// =====================================================
+// Constructor
+// ===================================================== 
 SDCard::SDCard()
-    : //spi_(VSPI),
+    : 
       ready_(false),
       csPin_(PinMap::SD_CS)
 {
 }
 
-
+// =====================================================
+// Begin
+// =====================================================
 bool SDCard::Begin()
 {
-    SPI.begin(
-        PinMap::SPI_SCK,
-        PinMap::SPI_MISO,
-        PinMap::SPI_MOSI
-        //PinMap::SD_CS
-    );
+    
+    // -------------------------------------------------
+    // SD Card CS
+    //
+    // SPI bus itself is initialized by App::Begin().
+    // -------------------------------------------------
+    pinMode( csPin_, OUTPUT);
+    digitalWrite(csPin_, HIGH);
 
 
+    // -------------------------------------------------
+    // Initialize SD card using shared global SPI bus
+    // -------------------------------------------------
     if (!SD.begin(csPin_, SPI))
     {
         Serial.println("SD: initialization failed");
-
-        ready_ = false;
+        
         return false;
     }
 
-
+    // -------------------------------------------------
+    // Check card
+    // -------------------------------------------------
     uint8_t cardType = SD.cardType();
 
     if (cardType == CARD_NONE)
     {
         Serial.println("SD: no card detected");
-
-        ready_ = false;
+       
         return false;
     }
 
@@ -48,13 +57,17 @@ bool SDCard::Begin()
     return true;
 }
 
-
+// =====================================================
+// Ready
+// =====================================================
 bool SDCard::IsReady() const
 {
     return ready_;
 }
 
-
+// =====================================================
+// Exists
+// =====================================================
 bool SDCard::Exists(const char* path)
 {
     if (!ready_)
@@ -65,7 +78,9 @@ bool SDCard::Exists(const char* path)
     return SD.exists(path);
 }
 
-
+// =====================================================
+// Create Directory
+// =====================================================
 bool SDCard::CreateDirectory(const char* path)
 {
     if (!ready_)
@@ -80,6 +95,10 @@ bool SDCard::CreateDirectory(const char* path)
 
     return SD.mkdir(path);
 }
+
+// =====================================================
+// Open Append
+// =====================================================
 File SDCard::OpenAppend(const char* path)
 {
     if (!ready_)
@@ -88,7 +107,9 @@ File SDCard::OpenAppend(const char* path)
     return SD.open(path, FILE_APPEND);
 }
 
-
+// =====================================================
+// Write 
+// =====================================================
 bool SDCard::Write(
     File& file,
     const char* data)
@@ -99,7 +120,9 @@ bool SDCard::Write(
     return file.print(data) > 0;
 }
 
-
+// =====================================================
+// Write Line
+// =====================================================
 bool SDCard::WriteLine(
     File& file,
     const char* data)
@@ -113,7 +136,9 @@ bool SDCard::WriteLine(
     return true;
 }
 
-
+// =====================================================
+// Flush
+// =====================================================
 bool SDCard::Flush(File& file)
 {
     if (!file)
@@ -124,7 +149,9 @@ bool SDCard::Flush(File& file)
     return true;
 }
 
-
+// =====================================================
+// Close
+// =====================================================
 bool SDCard::Close(File& file)
 {
     if (!file)
@@ -135,7 +162,9 @@ bool SDCard::Close(File& file)
     return true;
 }
 
-//=======================
+// =====================================================
+// Append File
+// =====================================================
 bool SDCard::AppendFile(
     const char* path,
     const char* data)

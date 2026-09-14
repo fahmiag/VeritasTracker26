@@ -45,7 +45,7 @@ private:
 
     ConfigurationManager configuration_;
 
-
+    
 
     PositionData position_;
     HeadingData heading_;
@@ -117,5 +117,7 @@ private:
     // LoggerManager logger;
     // DisplayManager display;
     // ButtonManager buttons;
+
+    void InitializeSPI();
 
 };

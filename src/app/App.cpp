@@ -31,6 +31,7 @@ TODO:
 #include "../config/PinMap.h"
 
 #include <Arduino.h>
+#include <SPI.h>
 
 
 // =====================================================
@@ -68,19 +69,23 @@ void App::Begin()
     Serial.println("==============================");
     Serial.println(" GPS Tracker Starting");
     Serial.println("==============================");
-    
-    // RockBLOCK is initialized by SatelliteManager.
 
-    //Done By GPS Manager
-    // if (scx20_.Begin()) 
-    // {
-    //     Serial.println("SCX-20: OK");
 
-    // }
-    // else
-    // {
-    //     Serial.println("SCX-20: ERROR");
-    // }
+
+    // =================================================
+    // Shared SPI Bus
+    //
+    // Devices:
+    //   SD Card  -> CS GPIO4
+    //   MCP2515  -> CS GPIO5
+    // =================================================
+
+     InitializeSPI();
+
+    // -----------------------------------------
+    // Configuration Manager
+    // -----------------------------------------
+
     if (configuration_.Begin())
     {
         Serial.print("Configuration: OK, telemetry interval = ");
@@ -166,24 +171,8 @@ void App::Begin()
     }
 
 
-    // -----------------------------------------
-    // Heading Manager
-    // -----------------------------------------
 
-    // if (!headingManager_.Begin())
-    // {
-    //     Serial.println(
-    //         "Heading Manager: ERROR"
-    //     );
-    // }
-    // else
-    // {
-    //     Serial.println(
-    //         "Heading Manager: OK"
-    //     );
-    // }
-
-
+    
     // -----------------------------------------
     // SD Card
     // -----------------------------------------
@@ -521,4 +510,48 @@ bool App::SendTelemetry()
         //   Serial.println(packet.heading, 3);
 
     return satelliteManager_.SendTelemetry(packet);
+}
+
+void App::InitializeSPI()
+{
+    // -------------------------------------------------
+    // Disable all SPI devices
+    // -------------------------------------------------
+
+    pinMode(
+        PinMap::SD_CS,
+        OUTPUT
+    );
+
+    pinMode(
+        PinMap::SCX20_CAN_CS,
+        OUTPUT
+    );
+
+
+    digitalWrite(
+        PinMap::SD_CS,
+        HIGH
+    );
+
+    digitalWrite(
+        PinMap::SCX20_CAN_CS,
+        HIGH
+    );
+
+
+    // -------------------------------------------------
+    // Shared VSPI bus
+    // -------------------------------------------------
+
+    SPI.begin(
+        PinMap::SPI_SCK,
+        PinMap::SPI_MISO,
+        PinMap::SPI_MOSI
+    );
+
+
+    Serial.println(
+        "Shared SPI Bus: initialized"
+    );
 }
