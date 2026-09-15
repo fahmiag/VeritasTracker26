@@ -13,7 +13,7 @@
 
 // 0 = Not Debug
 // 1 = Print Debug String
-#define DEBUG_SCX20_HDG 1
+#define DEBUG_SCX20_HDG 0
 
 // GPS
 #define DEBUG_GPS 1
