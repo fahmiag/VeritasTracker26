@@ -268,6 +268,25 @@ void App::Run()
             position_
         );
 
+    if (!gpsManager_.GetHeading(heading_))
+    {
+        heading_.valid = false;
+
+        #if DEBUG_SCX20_HDG
+            Serial.println("[APP] No valid heading");
+        #endif
+    }
+    else
+    {
+        heading_.valid = true;
+
+        #if DEBUG_SCX20_HDG
+            Serial.print("[APP] Heading: ");
+            Serial.println(heading_.heading, 3);
+        #endif
+
+    }
+
 
     // // -----------------------------------------
     // // Buttons
@@ -315,6 +334,8 @@ void App::Run()
     const uint32_t telemetryIntervalMs =
         configuration_.GetReportingIntervalMs();
 
+    
+
     if (telemetryIntervalMs == 0)
     {
         telemetryStarted_ = false;
@@ -322,7 +343,13 @@ void App::Run()
     else if (!telemetryStarted_) //TODO; set to send the first telemetry after 1 minutes, 
                                  //need to wait for heading
     {
-        if (position_.valid)
+        const bool startupDelayElapsed =
+        now >= FIRST_TELEMETRY_DELAY_MS;
+
+
+            // Wait at least one minute and require valid navigation data.
+        if (startupDelayElapsed &&
+            positionValid)
         {
             if (SendTelemetry())
             {
@@ -346,17 +373,22 @@ void App::Run()
     {
         Serial.println("\nTelemetry interval reached");
 
+        const uint32_t telemetryIntervalMinutes = 
+        configuration_.GetReportingIntervalMinutes();
+
         if (SendTelemetry())
         {
-            Serial.println(
-                "[APP] SendTelemetry() interval success");
+            Serial.print("[APP] SendTelemetry()");
+            Serial.print(telemetryIntervalMinutes);
+            Serial.println(" minutes interval success");
 
             lastTelemetryTime_ = now;
         }
         else
         {
-            Serial.println(
-                "SendTelemetry() interval FAILED");
+            Serial.print("[APP] SendTelemetry()");
+            Serial.print(telemetryIntervalMinutes);
+            Serial.println(" minutes interval FAILED");
         }
     }
     else if (timeOutReset_ && (now - lastTelemetryTime_ >= TELEMETRY_TIMEOUT_MS))
@@ -378,20 +410,20 @@ void App::Run()
 
 
         //TODO: Add heading not valid
-        if (gpsManager_.GetHeading(heading_)) //do not delete
-        {
-            #if DEBUG_SCX20_HDG
-                Serial.print("[APP] Heading: ");
-                Serial.println(heading_.heading, 3);
-            #endif
+        // if (gpsManager_.GetHeading(heading_)) //do not delete
+        // {
+        //     #if DEBUG_SCX20_HDG
+        //         Serial.print("[APP] Heading: ");
+        //         Serial.println(heading_.heading, 3);
+        //     #endif
 
-        }
-        else
-        {
-            #if DEBUG_SCX20_HDG
-                Serial.println("[APP] No valid heading");
-            #endif
-        }
+        // }
+        // else
+        // {
+        //     #if DEBUG_SCX20_HDG
+        //         Serial.println("[APP] No valid heading");
+        //     #endif
+        // }
 
 
         if (positionValid)
@@ -495,19 +527,17 @@ bool App::SendTelemetry()
             position_.course * 100.0
         );
 
-        //debug
-        //  Serial.print("[APP]  HeadingData: ");
-        //  Serial.println(heading_.heading, 3);
-
-    packet.heading =
-        static_cast<uint16_t>(
-            heading_.heading * 100.0
-        );
 
 
-        //debug
-        //  Serial.print("[APP] TX Heading: ");
-        //   Serial.println(packet.heading, 3);
+    // packet.heading =
+    //     static_cast<uint16_t>(
+    //         heading_.heading * 100.0
+    //     );
+
+    packet.heading = heading_.valid
+        ? static_cast<uint16_t>(heading_.heading * 100.0)
+        : 0;
+
 
     return satelliteManager_.SendTelemetry(packet);
 }

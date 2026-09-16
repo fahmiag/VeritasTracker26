@@ -430,7 +430,7 @@ void DisplayManager::DrawMainScreen()
     snprintf(
         buffer,
         sizeof(buffer),
-        "%02d:%02d:%02d   %02d-%02d-%04d",
+        "%02d:%02d:%02d  %02d-%02d-%04d",
         position_.hour,
         position_.minute,
         position_.second,
@@ -932,7 +932,7 @@ void DisplayManager::DrawSettings()
     oled_.DrawText(80, 16, intervalText);
 
     oled_.DrawText(0, 28, "LOG INTERVAL");
-    oled_.DrawText(80, 28, "1s");
+    oled_.DrawText(80, 28, "1 sec");
 
     oled_.DrawText(0, 40, "BACK");
 }

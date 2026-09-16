@@ -107,6 +107,8 @@ private:
     //for now set to minutes less than the interval
     static constexpr uint32_t TELEMETRY_TIMEOUT_MS = 4UL * 60UL * 1000UL; //10UL
 
+    static constexpr uint32_t FIRST_TELEMETRY_DELAY_MS = 60UL * 1000UL;
+
     bool SendTelemetry();
     bool telemetryStarted_;
     bool timeOutReset_;
