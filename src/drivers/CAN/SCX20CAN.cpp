@@ -59,17 +59,16 @@ bool SCX20CAN::Begin()
     // MCP2515
     // -------------------------------------------------
 
-    //TODO: Test this, using IF and While
+    
     uint8_t attempts = 0;
     while (CAN_OK != can_.begin(CAN_500KBPS) && attempts < 5)
     {
-        Serial.print("[SCX20] CAN BUS init failed. Attempts: ");
+        Serial.print("[SCX20] CAN BUS init failed. Attempts: ");//remove this
         Serial.println(attempts);
 
         attempts++;
         delay(100);
 
-        //return false;
     }
 
     if (attempts >= 5)

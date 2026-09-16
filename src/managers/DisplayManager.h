@@ -46,13 +46,15 @@ public:
         const PositionData& position,
         const HeadingData& heading,
         const SDStatus& sd,
-        const SatelliteStatus& satellite
+        const SatelliteStatus& satellite,
+        uint16_t reportingIntervalMinutes
     );
 
-    
-    
+
 
     DisplayScreen GetScreen();
+
+    void SetReportingIntervalMinutes(uint16_t minutes);
 
 
 
@@ -80,7 +82,7 @@ private:
     SDStatus sd_;
     SatelliteStatus satellite_;
 
-
+    uint16_t reportingIntervalMinutes_ = 0;
     // ---------------------------------
     // OLED power management
     // ---------------------------------
@@ -130,9 +132,6 @@ private:
 
 
     void CheckDisplayTimeout();
-
-    
-
 
 
 

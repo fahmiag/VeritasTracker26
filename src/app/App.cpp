@@ -7,21 +7,22 @@ TODO:
 [x] Save data into 1 day logfile
 [x] Micro SD CSV logger
 [x] OLED navigation/status pages
-
 [x] SCX20 CAN
-[ ] GPSManager source selection
 [x] Navigation/Heading data structure
 [x] RockBLOCK satellite communication
-[ ] Main system state machine
-
 [x] Test Create new file every day
 [x] Pack Data
 [x] Send data over-the-air
 [x] Read Heading from Furuno
 [x] Read GPS from Furuno
+[x] Add debug.h
+
+[ ] Main system state machine
+[ ] GPSManager source selection
 [ ] Add Buzzer to indicate Error
-[ ] Add Millis to Serial Monitor
-[ ] Add debug.h
+[ ] Send first position report after 1 minutes
+[ ] Check why the first position report does not have heading
+
 */
 
 
@@ -307,7 +308,8 @@ void App::Run()
         position_,
         heading_,
         sdStatus_,
-        satelliteStatus_
+        satelliteStatus_,
+        configuration_.GetReportingIntervalMinutes()
     );
 
     const uint32_t telemetryIntervalMs =
@@ -347,14 +349,14 @@ void App::Run()
         if (SendTelemetry())
         {
             Serial.println(
-                "SendTelemetry() 5 minutes success");
+                "[APP] SendTelemetry() interval success");
 
             lastTelemetryTime_ = now;
         }
         else
         {
             Serial.println(
-                "SendTelemetry() 5 minutes FAILED");
+                "SendTelemetry() interval FAILED");
         }
     }
     else if (timeOutReset_ && (now - lastTelemetryTime_ >= TELEMETRY_TIMEOUT_MS))
@@ -390,8 +392,6 @@ void App::Run()
                 Serial.println("[APP] No valid heading");
             #endif
         }
-
-
 
 
         if (positionValid)

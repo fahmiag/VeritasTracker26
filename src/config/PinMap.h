@@ -25,6 +25,13 @@ namespace PinMap
     constexpr uint8_t LED_STATUS = 15;
 
     // ------------------------------------------------
+    // Voltage Status
+    // ------------------------------------------------
+    constexpr uint8_t VOLTAGE_PSU = 36; 
+    constexpr uint8_t VOLTAGE_SYSTEM = 35; 
+    constexpr uint8_t VOLTAGE_BATTERY = 34; 
+
+    // ------------------------------------------------
     // u-blox M10 GNSS
     // ------------------------------------------------
     

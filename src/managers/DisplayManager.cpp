@@ -44,7 +44,8 @@ void DisplayManager::Update(
     const PositionData& position,
     const HeadingData& heading,
     const SDStatus& sd,
-    const SatelliteStatus& satellite
+    const SatelliteStatus& satellite,
+    uint16_t reportingIntervalMinutes
 )
 {
     // Store latest data
@@ -52,6 +53,8 @@ void DisplayManager::Update(
     heading_   = heading;
     sd_        = sd;
     satellite_ = satellite;
+
+    reportingIntervalMinutes_ = reportingIntervalMinutes;
 
     // Check OLED timeout
     CheckDisplayTimeout();
@@ -427,7 +430,7 @@ void DisplayManager::DrawMainScreen()
     snprintf(
         buffer,
         sizeof(buffer),
-        "%02d:%02d:%02d %02d-%02d-%04d",
+        "%02d:%02d:%02d   %02d-%02d-%04d",
         position_.hour,
         position_.minute,
         position_.second,
@@ -436,7 +439,7 @@ void DisplayManager::DrawMainScreen()
         position_.year
     );
 
-    oled_.DrawText( 0, 16,buffer);
+    oled_.DrawText( 0, 16, buffer);
 
 
     // -----------------------------------------
@@ -454,7 +457,14 @@ void DisplayManager::DrawMainScreen()
         oled_.DrawText( 30, 26, "NO ");
     }
 
+    snprintf(
+        buffer,
+        sizeof(buffer),
+        "SAT:%d",
+        position_.satellites
+    );
 
+    oled_.DrawText(70, 26, buffer);
 
 
     // -----------------------------------------
@@ -512,16 +522,7 @@ void DisplayManager::DrawMainScreen()
     }
 
 
-    //GPS satellites / satellite signal
-    snprintf(
-        buffer,
-        sizeof(buffer),
-        "GPS:%d  SATSIG:%d",
-        position_.satellites,
-        satellite_.signal
-    );
-
-    oled_.DrawText(0, 56, buffer);
+    oled_.DrawText(0, 56, "PWR: ");
 
 
 }
@@ -909,53 +910,32 @@ void DisplayManager::DrawSDStatus()
 
 void DisplayManager::DrawSettings()
 {
-    oled_.DrawText(
-        0,
-        0,
-        "SETTINGS"
-    );
+    oled_.DrawText(0, 0, "SETTINGS");
+    oled_.DrawLine(0, 10, 127, 10);
 
-    oled_.DrawLine(
-        0,
-        10,
-        127,
-        10
-    );
+    oled_.DrawText(0, 16, "TX INTERVAL");
 
+    char intervalText[12];
+    if (reportingIntervalMinutes_ == 0)
+    {
+        snprintf(intervalText, sizeof(intervalText), "OFF");
+    }
+    else
+    {
+        snprintf(
+            intervalText,
+            sizeof(intervalText),
+            "%u min",
+            static_cast<unsigned>(reportingIntervalMinutes_)
+        );
+    }
+    oled_.DrawText(80, 16, intervalText);
 
-    oled_.DrawText(
-        0,
-        16,
-        "TX INTERVAL"
-    );
+    oled_.DrawText(0, 28, "LOG INTERVAL");
+    oled_.DrawText(80, 28, "1s");
 
-    oled_.DrawText(
-        80,
-        16,
-        "60s"
-    );
-
-
-    oled_.DrawText(
-        0,
-        28,
-        "LOG INTERVAL"
-    );
-
-    oled_.DrawText(
-        80,
-        28,
-        "1s"
-    );
-
-
-    oled_.DrawText(
-        0,
-        40,
-        "BACK"
-    );
+    oled_.DrawText(0, 40, "BACK");
 }
-
 
 // =====================================================
 // Get Screen
@@ -964,4 +944,9 @@ void DisplayManager::DrawSettings()
 DisplayScreen DisplayManager::GetScreen()
 {
     return currentScreen_;
+}
+
+void DisplayManager::SetReportingIntervalMinutes(uint16_t minutes)
+{
+    reportingIntervalMinutes_ = minutes;
 }
