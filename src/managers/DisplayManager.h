@@ -11,12 +11,13 @@
 enum class DisplayScreen
 {
     MAIN,
-    MENU,
     GPS_STATUS,
     HEADING_STATUS,
     SATELLITE_STATUS,
     SD_STATUS,
-    SETTINGS
+    SETTINGS,
+    VOLTAGE,
+    ERROR
 };
 
 struct SDStatus
@@ -73,10 +74,7 @@ private:
     uint8_t menuIndex_ = 0;
     uint8_t screenIndex_ = 0;
     
-
-    static constexpr uint8_t MENU_COUNT = 5;
-
-    static constexpr uint8_t PAGE_COUNT = 5;
+    static constexpr uint8_t PAGE_COUNT = 7;
 
     // ---------------------------------
     // GPS data
@@ -119,6 +117,9 @@ private:
     void DrawSatelliteStatus();
     void DrawSDStatus();
     void DrawSettings();
+    void DrawVoltage();
+    void DrawError();
+    
     
     void UpdateDisplay();
 

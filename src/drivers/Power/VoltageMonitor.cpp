@@ -15,7 +15,7 @@ namespace
     constexpr float SYSTEM_HIGH_V = 5.5f;
     constexpr float SYSTEM_LOW_V = 5.0f;
 
-    // Reject an unpowered input, including the calibration offset.
+    // Reject an un powered input, including the calibration offset.
     constexpr float SYSTEM_POWERED_V = 1.0f;
 }
 
