@@ -141,18 +141,9 @@ void App::Begin()
     // Status LED
     // -----------------------------------------
 
-    if (statusLED_.Begin())
-    {
-        Serial.println("Status LED: OK");
-    }
-    else
-    {
-        Serial.println("Status LED: ERROR");
-    }
+    statusLED_.Begin();
 
-
-
-
+    voltageMonitor_.Begin();
 
     // -----------------------------------------
     // GPS Manager
@@ -234,12 +225,12 @@ void App::Run()
 
     uint32_t now = millis();
 
-
     // // -----------------------------------------
     // // Status LED
     // // -----------------------------------------
 
      statusLED_.Update();
+     voltageMonitor_.Update();
 
 
     // // -----------------------------------------
@@ -317,7 +308,11 @@ void App::Run()
 
     satelliteStatus_.signal = -1; //current RockBLOCK wrapper does not expose signal strength yet.
 
-
+    // // -----------------------------------------
+    // // Voltage
+    // // -----------------------------------------
+    voltageMonitor_.Update();
+    
     // // -----------------------------------------
     // // OLED
     // // -----------------------------------------
@@ -328,7 +323,8 @@ void App::Run()
         heading_,
         sdStatus_,
         satelliteStatus_,
-        configuration_.GetReportingIntervalMinutes()
+        configuration_.GetReportingIntervalMinutes(),
+        voltageMonitor_.GetData()
     );
 
     const uint32_t telemetryIntervalMs =
@@ -378,7 +374,7 @@ void App::Run()
 
         if (SendTelemetry())
         {
-            Serial.print("[APP] SendTelemetry()");
+            Serial.print("[APP] SendTelemetry() ");
             Serial.print(telemetryIntervalMinutes);
             Serial.println(" minutes interval success");
 
@@ -386,7 +382,7 @@ void App::Run()
         }
         else
         {
-            Serial.print("[APP] SendTelemetry()");
+            Serial.print("[APP] SendTelemetry() ");
             Serial.print(telemetryIntervalMinutes);
             Serial.println(" minutes interval FAILED");
         }

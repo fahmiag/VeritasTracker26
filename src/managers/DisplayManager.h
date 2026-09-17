@@ -3,6 +3,7 @@
 #include "../drivers/Display/OLED.h"
 #include "../drivers/Button/Buttons.h"
 #include "../drivers/Storage/SDCard.h"
+#include "../drivers/Power/VoltageMonitor.h"
 
 #include "../data/PositionData.h"
 #include "../data/HeadingData.h"
@@ -47,7 +48,8 @@ public:
         const HeadingData& heading,
         const SDStatus& sd,
         const SatelliteStatus& satellite,
-        uint16_t reportingIntervalMinutes
+        uint16_t reportingIntervalMinutes,
+        const VoltageData& voltage
     );
 
 
@@ -69,8 +71,12 @@ private:
     DisplayScreen currentScreen_ = DisplayScreen::MAIN;
 
     uint8_t menuIndex_ = 0;
+    uint8_t screenIndex_ = 0;
+    
 
     static constexpr uint8_t MENU_COUNT = 5;
+
+    static constexpr uint8_t PAGE_COUNT = 5;
 
     // ---------------------------------
     // GPS data
@@ -81,6 +87,7 @@ private:
 
     SDStatus sd_;
     SatelliteStatus satellite_;
+    VoltageData voltage_;
 
     uint16_t reportingIntervalMinutes_ = 0;
     // ---------------------------------
@@ -122,6 +129,14 @@ private:
     void NextMenuItem();
     void PreviousMenuItem();
 
+    // ---------------------------------
+    // Page navigation
+    // ---------------------------------
+
+    void NextPageItem();
+    void PreviousPageItem();
+
+    void GotoPage();
 
     // ---------------------------------
     // OLED power management

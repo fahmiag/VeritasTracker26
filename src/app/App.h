@@ -15,6 +15,7 @@
 #include "../drivers/StatusLED.h"
 #include "../drivers/Storage/SDCard.h"
 #include "../drivers/Satellite/RockBlockPlus9704.h"
+#include "../drivers/Power/VoltageMonitor.h"
 
 #include "../managers/SatelliteManager.h"
 #include "../protocol/TelemetryConfig.h"
@@ -73,6 +74,7 @@ private:
     
 
     StatusLED statusLED_;
+    VoltageMonitor voltageMonitor_;
 
  
     // -----------------------------

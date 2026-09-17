@@ -20,6 +20,7 @@ bool DisplayManager::Begin()
         DisplayScreen::MAIN;
 
     menuIndex_ = 0;
+    screenIndex_ = 0;
 
     displayActive_ = true;
 
@@ -45,7 +46,8 @@ void DisplayManager::Update(
     const HeadingData& heading,
     const SDStatus& sd,
     const SatelliteStatus& satellite,
-    uint16_t reportingIntervalMinutes
+    uint16_t reportingIntervalMinutes,
+    const VoltageData& voltage
 )
 {
     // Store latest data
@@ -53,6 +55,7 @@ void DisplayManager::Update(
     heading_   = heading;
     sd_        = sd;
     satellite_ = satellite;
+    voltage_ = voltage;
 
     reportingIntervalMinutes_ = reportingIntervalMinutes;
 
@@ -190,13 +193,13 @@ void DisplayManager::HandleEvent(
 
         case DisplayScreen::MAIN:
 
-            if (event ==
-                ButtonEvent::SELECT_SHORT)
+            if (event == ButtonEvent::SELECT_SHORT) 
             {
                 currentScreen_ =
-                    DisplayScreen::MENU;
+                    DisplayScreen::GPS_STATUS; //TODO: remember the previous screen
 
-                menuIndex_ = 0;
+                //GotoPage();
+                screenIndex_ = 0;
 
                 DrawScreen();
             }
@@ -308,8 +311,68 @@ void DisplayManager::HandleEvent(
                 DrawScreen();
             }
 
+            if (event == ButtonEvent::UP_SHORT)
+            {
+                NextPageItem();
+                GotoPage();
+            }
+
+            else if (event == ButtonEvent::DOWN_SHORT)
+            {
+                PreviousPageItem();
+                GotoPage();
+            }
+
             break;
     }
+}
+
+void DisplayManager::GotoPage()
+{
+    switch (menuIndex_)
+    {
+        case 0:
+
+            currentScreen_ =
+                DisplayScreen::GPS_STATUS;
+
+            break;
+
+
+        case 1:
+
+            currentScreen_ =
+                DisplayScreen::HEADING_STATUS;
+
+            break;
+
+
+        case 2:
+
+            currentScreen_ =
+                DisplayScreen::SATELLITE_STATUS;
+
+            break;
+
+
+        case 3:
+
+            currentScreen_ =
+                DisplayScreen::SD_STATUS;
+
+            break;
+
+
+        case 4:
+
+            currentScreen_ =
+                DisplayScreen::SETTINGS;
+
+            break;
+    }
+
+
+    DrawScreen();
 }
 
 
@@ -342,6 +405,41 @@ void DisplayManager::PreviousMenuItem()
     else
     {
         menuIndex_--;
+    }
+
+
+    DrawScreen();
+}
+
+// =====================================================
+// Page Navigation
+// =====================================================
+
+void DisplayManager::NextPageItem()
+{
+    screenIndex_++;
+
+
+    if (screenIndex_ >= PAGE_COUNT)
+    {
+        screenIndex_ = 0;
+    }
+
+
+    DrawScreen();
+}
+
+
+void DisplayManager::PreviousPageItem()
+{
+    if (screenIndex_ == 0)
+    {
+        screenIndex_ =
+            PAGE_COUNT - 1;
+    }
+    else
+    {
+        screenIndex_--;
     }
 
 
@@ -522,7 +620,14 @@ void DisplayManager::DrawMainScreen()
     }
 
 
-    oled_.DrawText(0, 56, "PWR: ");
+    oled_.DrawText(0, 56, "PWR: ");    
+    oled_.DrawText(
+        50,
+        56,
+        voltage_.valid
+            ? VoltageMonitor::SourceName(voltage_.source)
+            : "---"
+    );
 
 
 }
