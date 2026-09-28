@@ -4,7 +4,7 @@
 namespace
 {
     constexpr float ADC_GAIN = 0.00417f;
-    constexpr float ADC_OFFSET = 0.53f;
+    constexpr float ADC_OFFSET = 0.0f;//  0.53f;
 
     // Adjust these thresholds after checking actual voltages.
     constexpr float PSU_ON_V = 10.0f;
