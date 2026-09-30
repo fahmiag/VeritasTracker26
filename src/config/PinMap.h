@@ -18,6 +18,12 @@ namespace PinMap
     constexpr uint8_t BUTTON_SELECT = 25;
     constexpr uint8_t BUTTON_BACK   = 26;
 
+    
+    constexpr uint8_t BUTTON_PANIC   = 39; //3v3 Pull Up
+    constexpr uint8_t BUTTON_ENCLOSURE   = 27; //IO and GND, No pullup resistor
+
+
+
     // ------------------------------------------------
     // Status LED & Buzzer
     // ------------------------------------------------
