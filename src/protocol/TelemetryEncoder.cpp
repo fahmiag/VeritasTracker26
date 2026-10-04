@@ -63,7 +63,9 @@ bool TelemetryEncoder::Encode(
         return false;
     }
 
-    if (packet.type != Telemetry::Type::POSITION)
+    if (packet.type != Telemetry::Type::POSITION&&
+        packet.type != Telemetry::Type::EMERGENCY &&
+        packet.type != Telemetry::Type::TAMPER)
     {
         return false;
     }

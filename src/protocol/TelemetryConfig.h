@@ -7,20 +7,30 @@ namespace Telemetry
 {
     constexpr uint8_t VERSION = 1;
 
+    //the MSB indicate message direction
+    //0x8_ means MT.
     enum class Type : uint8_t
     {
         POSITION     = 0x01,
         ACK          = 0x02,
+        EMERGENCY    = 0x03,
+        TAMPER       = 0x04,
         SET_INTERVAL = 0x80
     };
 
     // POSITION status byte
+    // TODO Remove Unneeded flag
     constexpr uint8_t POSITION_VALID = 0x01;
     constexpr uint8_t COG_VALID      = 0x02;
     constexpr uint8_t HEADING_VALID  = 0x04;
     constexpr uint8_t TIME_VALID     = 0x08;
     constexpr uint8_t SOURCE_SCX20   = 0x10;
-    constexpr uint8_t RESERVED_MASK  = 0xE0;
+
+    constexpr uint8_t EMERGENCY      = 0x20;
+    constexpr uint8_t TAMPER         = 0x40;
+
+    constexpr uint8_t RESERVED_MASK  = 0x80;
+    
 
     enum class PositionSource : uint8_t
     {

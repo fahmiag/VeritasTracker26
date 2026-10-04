@@ -7,6 +7,7 @@
 //#include "../managers/HeadingManager.h"
 
 #include "../managers/ConfigurationManager.h"
+#include "../managers/AlarmManager.h"
 
 
 // Drivers
@@ -87,6 +88,7 @@ private:
     // -----------------------------
     
     uint32_t lastLogTime_;
+    
 
     static constexpr uint32_t
         LOG_INTERVAL_MS = 1000;
@@ -97,6 +99,8 @@ private:
     uint32_t lastButtonUpdate_ = 0;
 
     uint32_t lastTelemetryTime_;
+
+    AlarmManager alarmManager_;
 
     // #if DEBUG_SATELLITE_TX
     //     static constexpr uint32_t TELEMETRY_INTERVAL_MS =5UL * 60UL * 1000UL;
@@ -123,5 +127,7 @@ private:
     // ButtonManager buttons;
 
     void InitializeSPI();
+
+    TelemetryPacket BuildTelemetryPacket() const;
 
 };

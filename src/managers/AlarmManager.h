@@ -1,72 +1,119 @@
 #pragma once
+
 #include <Arduino.h>
 
-// Call all methods from App::Run(), including completion handling.
-class AlarmManager {
+#include "../data/TelemetryPacket.h"
+
+class AlarmManager
+{
 public:
-    enum class Kind : uint8_t { Emergency = 0, Tamper = 1 };
-    struct InputConfig {
-        uint8_t pin;
-        bool activeLow;
-        uint8_t mode; // INPUT_PULLUP or INPUT, according to wiring
-        uint32_t debounceMs;
-    };
-    struct Event {
-        Kind kind;
-        uint32_t id;
-        uint32_t uptimeMs; // occurrence time, NOT Unix time
-        uint8_t status;    // bit 0 emergency latched, bit 1 tamper latched
-    };
-    AlarmManager(InputConfig emergency, InputConfig tamper,
-                 uint32_t retryMs = 30000);
-    void Begin(bool tamperArmed = true);
-    void Update();
-    bool EmergencyActive() const;
-    bool EnclosureOpen() const;
-    bool EmergencyLatched() const { return emergencyLatched_; }
-    bool TamperLatched() const { return tamperLatched_; }
-    bool TamperArmed() const { return tamperArmed_; }
-    void SetTamperArmed(bool armed);
-    // Acknowledge locally or by an authenticated command; refuse while active.
-    bool ClearEmergency();
-    bool ClearTamper();
-    // Supply existing protocol's two FREE, non-overlapping flag masks.
-    uint8_t ApplyPositionFlags(uint8_t flags, uint8_t emergencyMask,
-                               uint8_t tamperMask) const;
-    // Reserve the highest priority pending event. false = no eligible event.
-    // The caller MUST subsequently call Complete(id, success).
-    bool TakeNext(Event& event);
-    bool Complete(uint32_t id, bool success);
-    bool Busy() const { return inFlight_; }
-    bool HasPending() const;
+    void Begin();
+
+    // Poll inputs and capture navigation when an alarm activates.
+    void Update(const TelemetryPacket& navigation);
+
+    // Add latched alarm states to the navigation status byte.
+    uint8_t ApplyStatus(uint8_t status) const;
+
+    // Returns the highest-priority event eligible for transmission.
+    bool GetNext(
+        TelemetryPacket& packet,
+        bool& firstAttempt
+    ) const;
+
+    // Called after SatelliteManager accepts an alarm transmission.
+    void Queued(const TelemetryPacket& packet);
+
+    // Called when the modem rejects the initial queue request.
+    void QueueFailed(Telemetry::Type type);
+
+    // Called when the queued transmission finishes.
+    void Complete(bool success);
+
+    bool EmergencyActive() const
+    {
+        return emergency_.stable;
+    }
+
+    bool EnclosureOpen() const
+    {
+        return tamper_.stable;
+    }
+
+    bool EmergencyLatched() const
+    {
+        return emergencyLatched_;
+    }
+
+    bool TamperLatched() const
+    {
+        return tamperLatched_;
+    }
+
+    bool AcknowledgeEmergency();
+    bool AcknowledgeTamper();
+
+    void SetTamperArmed(
+        bool armed,
+        const TelemetryPacket& navigation
+    );
 
 private:
-    struct Input {
-        explicit Input(InputConfig value) : config(value) {}
-        InputConfig config;
+    struct Input
+    {
+        uint8_t pin = 0;
+        bool activeLow = true;
+
         bool candidate = false;
         bool stable = false;
+
         uint32_t changedAt = 0;
-        bool Sample(uint32_t now);
-        bool Read() const;
-        void Begin(uint32_t now);
     };
-    struct Slot {
+
+    struct Pending
+    {
+        TelemetryPacket packet{};
+
         bool pending = false;
-        Event event{};
+        bool sequenceAssigned = false;
         bool retryWaiting = false;
+
         uint32_t failedAt = 0;
     };
-    void Raise(Kind kind, uint32_t now);
-    uint8_t Status() const;
-    Input emergency_;
-    Input tamper_;
-    Slot slots_[2]{};
-    Event active_{};
-    uint32_t nextId_ = 1;
-    uint32_t retryMs_;
-    bool inFlight_ = false;
+
+    static constexpr uint32_t DEBOUNCE_MS = 50;
+    static constexpr uint32_t RETRY_MS = 30000;
+
+    // Closed enclosure contact = LOW.
+    // Open enclosure contact = HIGH.
+    //
+    // Change to true if your switch produces LOW when opened.
+    static constexpr bool TAMPER_ACTIVE_LOW = false;
+
+    static bool Read(const Input& input);
+
+    static bool Sample(
+        Input& input,
+        uint32_t now
+    );
+
+    static uint8_t Index(Telemetry::Type type);
+
+    void Queue(
+        uint8_t index,
+        const TelemetryPacket& navigation
+    );
+
+    Input emergency_{};
+    Input tamper_{};
+
+    // Index 0 = emergency; index 1 = tamper.
+    Pending pending_[2]{};
+
+    int8_t activeIndex_ = -1;
+
     bool initialized_ = false;
+
     bool emergencyLatched_ = false;
     bool tamperLatched_ = false;
     bool tamperArmed_ = true;

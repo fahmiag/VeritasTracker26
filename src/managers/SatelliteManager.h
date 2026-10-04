@@ -43,6 +43,14 @@ public:
     bool IsSending() const;
     bool WasLastSendSuccessful() const;
 
+    bool SendAlarm(
+        TelemetryPacket& packet,
+        bool firstAttempt
+    );
+
+    bool ConsumeAlarmResult(bool& success);
+    
+
 private:
 
     RockBlockPlus9704& modem_;
@@ -53,7 +61,15 @@ private:
 
     bool initialized_;
 
-    uint16_t sequence_;
+    uint16_t sequence_ = 0;
+
+    uint8_t txBuffer_[TelemetryEncoder::PACKET_SIZE]{};
+
+    bool alarmTxActive_ = false;
+    bool alarmResultReady_ = false;
+    bool alarmResultSuccess_ = false;
+
+    bool SendPacket(const TelemetryPacket& packet);
 
     static constexpr uint16_t TELEMETRY_TOPIC = 1;
 

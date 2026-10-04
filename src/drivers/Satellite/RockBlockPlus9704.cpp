@@ -198,7 +198,7 @@ void RockBlockPlus9704::OnMessageComplete(  //TODO: Check who call this
     rbMsgStatus_t status
 )
 {
-    if (instance_ == nullptr)
+    if (instance_ == nullptr || !instance_->sending_)
     {
         return;
     }
@@ -343,6 +343,22 @@ bool RockBlockPlus9704::ReceiveBinary(
 
         return false;
     }
+
+    return true;
+}
+
+bool RockBlockPlus9704::ConsumeSendResult(
+    bool& success)
+{
+    if (!sendComplete_)
+    {
+        return false;
+    }
+
+    success = sendSuccess_;
+
+    // Each completion is consumed once.
+    sendComplete_ = false;
 
     return true;
 }

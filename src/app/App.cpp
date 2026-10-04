@@ -34,6 +34,8 @@ TODO:
 #include <Arduino.h>
 #include <SPI.h>
 
+#include <cmath>
+
 
 // =====================================================
 // Constructor
@@ -196,6 +198,11 @@ void App::Begin()
         );
     }
 
+    // -----------------------------------------
+    // Alarm manager
+    // -----------------------------------------
+    alarmManager_.Begin();
+
 
     // -----------------------------------------
     // Normal LED operation
@@ -259,6 +266,14 @@ void App::Run()
             position_
         );
 
+    // GetPosition() can fail without replacing position_.
+    // Also reject a fix older than five seconds.
+    positionValid =
+        positionValid &&
+        uint32_t(now - position_.lastUpdate) <= 5000UL;
+
+    position_.valid = positionValid;
+
     if (!gpsManager_.GetHeading(heading_))
     {
         heading_.valid = false;
@@ -277,6 +292,10 @@ void App::Run()
         #endif
 
     }
+
+    alarmManager_.Update(
+        BuildTelemetryPacket()
+    );
 
 
     // // -----------------------------------------
@@ -308,6 +327,13 @@ void App::Run()
 
     satelliteStatus_.signal = -1; //current RockBLOCK wrapper does not expose signal strength yet.
 
+    // Returns false while the input is active or its alert is outstanding.
+    bool emergencyCleared =
+        alarmManager_.AcknowledgeEmergency();
+
+    bool tamperCleared =
+        alarmManager_.AcknowledgeTamper();
+
     // // -----------------------------------------
     // // Voltage
     // // -----------------------------------------
@@ -327,72 +353,156 @@ void App::Run()
         voltageMonitor_.GetData()
     );
 
-    const uint32_t telemetryIntervalMs =
-        configuration_.GetReportingIntervalMs();
 
-    
+    // -------------------------------------------------
+// Consume completion of a previously queued alarm.
+// -------------------------------------------------
 
-    if (telemetryIntervalMs == 0)
+bool alarmSuccess = false;
+
+if (satelliteManager_.ConsumeAlarmResult(alarmSuccess))
+{
+    alarmManager_.Complete(alarmSuccess);
+
+    Serial.println(
+        alarmSuccess
+            ? "[ALARM] Transmission succeeded"
+            : "[ALARM] Transmission failed; retry pending"
+    );
+}
+
+// -------------------------------------------------
+// Alarm messages have priority over routine positions.
+// -------------------------------------------------
+
+if (satelliteManager_.IsReady() &&
+    !satelliteManager_.IsBusy())
+{
+    TelemetryPacket alarmPacket{};
+
+    bool firstAttempt = false;
+
+    if (alarmManager_.GetNext(
+            alarmPacket,
+            firstAttempt))
     {
-        telemetryStarted_ = false;
-    }
-    else if (!telemetryStarted_) //TODO; set to send the first telemetry after 1 minutes, 
-                                 //need to wait for heading
-    {
-        const bool startupDelayElapsed =
-        now >= FIRST_TELEMETRY_DELAY_MS;
-
-
-            // Wait at least one minute and require valid navigation data.
-        if (startupDelayElapsed &&
-            positionValid)
+        if (satelliteManager_.SendAlarm(
+                alarmPacket,
+                firstAttempt))
         {
-            if (SendTelemetry())
-            {
-                Serial.println(
-                    "First telemetry queued successfully"
-                );
+            alarmManager_.Queued(alarmPacket);
 
-                telemetryStarted_ = true;
-                lastTelemetryTime_ = now;
-                timeOutReset_ = false;
-            }
-            else
-            {
-                Serial.println(
-                    "First telemetry FAILED"
-                );
-            }
-        }
-    }
-    else if (now - lastTelemetryTime_ >= telemetryIntervalMs)
-    {
-        Serial.println("\nTelemetry interval reached");
-
-        const uint32_t telemetryIntervalMinutes = 
-        configuration_.GetReportingIntervalMinutes();
-
-        if (SendTelemetry())
-        {
-            Serial.print("[APP] SendTelemetry() ");
-            Serial.print(telemetryIntervalMinutes);
-            Serial.println(" minutes interval success");
-
-            lastTelemetryTime_ = now;
+            Serial.println(
+                alarmPacket.type == Telemetry::Type::EMERGENCY
+                    ? "[ALARM] Emergency message queued"
+                    : "[ALARM] Tamper message queued"
+            );
         }
         else
         {
-            Serial.print("[APP] SendTelemetry() ");
-            Serial.print(telemetryIntervalMinutes);
-            Serial.println(" minutes interval FAILED");
+            alarmManager_.QueueFailed(
+                alarmPacket.type
+            );
         }
     }
-    else if (timeOutReset_ && (now - lastTelemetryTime_ >= TELEMETRY_TIMEOUT_MS))
+}
+
+// -------------------------------------------------
+// Periodic positions retain their own reporting timer.
+// -------------------------------------------------
+
+const uint32_t telemetryIntervalMs =
+    configuration_.GetReportingIntervalMs();
+
+if (telemetryIntervalMs == 0)
+{
+    telemetryStarted_ = false;
+}
+else if (!satelliteManager_.IsBusy())
+{
+    const bool firstDue =
+        !telemetryStarted_ &&
+        now >= FIRST_TELEMETRY_DELAY_MS;
+
+    const bool periodicDue =
+        telemetryStarted_ &&
+        uint32_t(now - lastTelemetryTime_) >=
+            telemetryIntervalMs;
+
+    if ((firstDue || periodicDue) &&
+        positionValid &&
+        SendTelemetry())
     {
-        rockBlock_.TimeOutReset();
-        
-        timeOutReset_ = true;
+        telemetryStarted_ = true;
+
+        lastTelemetryTime_ = now;
     }
+}
+
+    // const uint32_t telemetryIntervalMs =
+    //     configuration_.GetReportingIntervalMs();
+
+    // if (telemetryIntervalMs == 0)
+    // {
+    //     telemetryStarted_ = false;
+    // }
+    // else if (!telemetryStarted_) //TODO; set to send the first telemetry after 1 minutes, 
+    //                              //need to wait for heading
+    // {
+    //     const bool startupDelayElapsed =
+    //     now >= FIRST_TELEMETRY_DELAY_MS;
+
+
+    //         // Wait at least one minute and require valid navigation data.
+    //     if (startupDelayElapsed &&
+    //         positionValid)
+    //     {
+    //         if (SendTelemetry())
+    //         {
+    //             Serial.println(
+    //                 "First telemetry queued successfully"
+    //             );
+
+    //             telemetryStarted_ = true;
+    //             lastTelemetryTime_ = now;
+    //             timeOutReset_ = false;
+    //         }
+    //         else
+    //         {
+    //             Serial.println(
+    //                 "First telemetry FAILED"
+    //             );
+    //         }
+    //     }
+    // }
+    // else if (now - lastTelemetryTime_ >= telemetryIntervalMs)
+    // {
+    //     Serial.println("\nTelemetry interval reached");
+
+    //     const uint32_t telemetryIntervalMinutes = 
+    //     configuration_.GetReportingIntervalMinutes();
+
+    //     if (SendTelemetry())
+    //     {
+    //         Serial.print("[APP] SendTelemetry() ");
+    //         Serial.print(telemetryIntervalMinutes);
+    //         Serial.println(" minutes interval success");
+
+    //         lastTelemetryTime_ = now;
+    //     }
+    //     else
+    //     {
+    //         Serial.print("[APP] SendTelemetry() ");
+    //         Serial.print(telemetryIntervalMinutes);
+    //         Serial.println(" minutes interval FAILED");
+    //     }
+    // }
+    // else if (timeOutReset_ && (now - lastTelemetryTime_ >= TELEMETRY_TIMEOUT_MS))
+    // {
+    //     rockBlock_.TimeOutReset();
+        
+    //     timeOutReset_ = true;
+    // }
 
 
  
@@ -443,97 +553,127 @@ void App::Run()
     // SatelliteManager owns RockBLOCK polling.
     satelliteManager_.Update();
 }
-
-bool App::SendTelemetry()
+TelemetryPacket App::BuildTelemetryPacket() const
 {
-    if (!position_.valid)
-    {
-        Serial.println(
-            "[SAT] GPS position invalid"
-        );
-
-        return false;
-    }
-
     TelemetryPacket packet{};
 
-    packet.version =
-        Telemetry::VERSION;
- 
-    packet.type =
-            Telemetry::Type::POSITION;
-   
-
-    packet.status = 0;
-
-    //TODO: try remove if (position_.valid)
-
-    // if (position_.valid)
-    // {
-    //     packet.status |= Telemetry::POSITION_VALID;
-    // }
-
-    // if (position_.valid)
-    // {
-    //     packet.status |= Telemetry::COG_VALID;
-    // }
-
-    // if (heading_.valid)
-    // {
-    //     packet.status |= Telemetry::HEADING_VALID;
-    // }
-    packet.status |= Telemetry::POSITION_VALID;
-    packet.status |= Telemetry::COG_VALID;
-    packet.status |= Telemetry::HEADING_VALID;
-
-    if (position_.year >= 1970 &&
-        position_.month >= 1 && position_.month <= 12 &&
-        position_.day >= 1 && position_.day <= 31)
-    {
-        packet.status |= Telemetry::TIME_VALID;
-    }
+    packet.version = Telemetry::VERSION;
+    packet.type = Telemetry::Type::POSITION;
 
     packet.positionSource =
-        (position_.source == PositionSource::SCX20)
+        position_.source == PositionSource::SCX20
             ? Telemetry::PositionSource::SCX20
             : Telemetry::PositionSource::UBLOX;
 
-    packet.timestamp =
-        DateTimeToUnix(
-            position_.year,
-            position_.month,
-            position_.day,
-            position_.hour,
-            position_.minute,
-            position_.second
-        );
+    const bool validPosition =
+        position_.valid &&
+        std::isfinite(position_.latitude) &&
+        std::isfinite(position_.longitude) &&
+        position_.latitude >= -90.0 &&
+        position_.latitude <= 90.0 &&
+        position_.longitude >= -180.0 &&
+        position_.longitude <= 180.0;
 
-    packet.latitude =
-        static_cast<int32_t>(
-            position_.latitude * 10000000.0
-        );
+    if (validPosition)
+    {
+        packet.status |= Telemetry::POSITION_VALID;
 
-    packet.longitude =
-        static_cast<int32_t>(
-            position_.longitude * 10000000.0
-        );
+        packet.latitude =
+            static_cast<int32_t>(
+                position_.latitude * 10000000.0
+            );
 
-    packet.cog =
-        static_cast<uint16_t>(
-            position_.course * 100.0
-        );
+        packet.longitude =
+            static_cast<int32_t>(
+                position_.longitude * 10000000.0
+            );
 
+        if (std::isfinite(position_.course) &&
+            position_.course >= 0.0 &&
+            position_.course < 360.0)
+        {
+            packet.status |= Telemetry::COG_VALID;
 
+            packet.cog =
+                static_cast<uint16_t>(
+                    position_.course * 100.0
+                );
+        }
+    }
 
-    // packet.heading =
-    //     static_cast<uint16_t>(
-    //         heading_.heading * 100.0
-    //     );
+    if (heading_.valid &&
+        std::isfinite(heading_.heading) &&
+        heading_.heading >= 0.0 &&
+        heading_.heading < 360.0)
+    {
+        packet.status |= Telemetry::HEADING_VALID;
 
-    packet.heading = heading_.valid
-        ? static_cast<uint16_t>(heading_.heading * 100.0)
-        : 0;
+        packet.heading =
+            static_cast<uint16_t>(
+                heading_.heading * 100.0
+            );
+    }
 
+    const bool dateInRange =
+        position_.valid &&
+        position_.year >= 2000 &&
+        position_.year <= 2099 &&
+        position_.month >= 1 &&
+        position_.month <= 12 &&
+        position_.day >= 1 &&
+        position_.hour < 24 &&
+        position_.minute < 60 &&
+        position_.second < 60;
+
+    if (dateInRange)
+    {
+        const uint8_t daysInMonth[] =
+        {
+            31, 28, 31, 30, 31, 30,
+            31, 31, 30, 31, 30, 31
+        };
+
+        uint8_t maximumDay =
+            daysInMonth[position_.month - 1];
+
+        // Correct for the supported range 2000–2099.
+        if (position_.month == 2 &&
+            position_.year % 4 == 0)
+        {
+            maximumDay = 29;
+        }
+
+        if (position_.day <= maximumDay)
+        {
+            packet.status |= Telemetry::TIME_VALID;
+
+            packet.timestamp =
+                DateTimeToUnix(
+                    position_.year,
+                    position_.month,
+                    position_.day,
+                    position_.hour,
+                    position_.minute,
+                    position_.second
+                );
+        }
+    }
+
+    packet.status =
+        alarmManager_.ApplyStatus(packet.status);
+
+    return packet;
+}
+
+bool App::SendTelemetry()
+{
+    const TelemetryPacket packet =
+        BuildTelemetryPacket();
+
+    if (!(packet.status & Telemetry::POSITION_VALID))
+    {
+        return false;
+    }
 
     return satelliteManager_.SendTelemetry(packet);
 }

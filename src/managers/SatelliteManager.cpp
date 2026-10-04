@@ -48,6 +48,18 @@ void SatelliteManager::Update()
     }
 
     modem_.Update();
+
+    bool success = false;
+
+    if (modem_.ConsumeSendResult(success) &&
+        alarmTxActive_)
+    {
+        alarmTxActive_ = false;
+
+        alarmResultSuccess_ = success;
+        alarmResultReady_ = true;
+    }
+
     ProcessIncomingMessage();
 }
 
@@ -157,7 +169,9 @@ bool SatelliteManager::SendTelemetry(
 
 bool SatelliteManager::IsBusy() const
 {
-    return modem_.IsSending();
+    return modem_.IsSending() ||
+        alarmTxActive_ ||
+        alarmResultReady_;
 }
 
 //=========================================
@@ -315,9 +329,17 @@ bool SatelliteManager::SendAck(
     Protocol::AckResult result,
     Protocol::AckError error)
 {
-    uint8_t buffer[
-        Protocol::ACK_PACKET_SIZE
-    ];
+    // uint8_t buffer[
+    //     Protocol::ACK_PACKET_SIZE
+    // ];
+    if (!initialized_ ||
+        modem_.IsSending() ||
+        alarmTxActive_)
+    {
+        return false;
+    }
+
+    uint8_t* buffer = txBuffer_;
 
     size_t encodedLength = 0;
 
@@ -328,7 +350,7 @@ bool SatelliteManager::SendAck(
             result,
             error,
             buffer,
-            sizeof(buffer),
+            sizeof(txBuffer_),
             encodedLength))
     {
         Serial.println(
@@ -357,11 +379,17 @@ bool SatelliteManager::SendAck(
     Serial.println();
 
 
-    return modem_.SendBinary(
-        RAW_TOPIC,
-        buffer,
-        encodedLength
-    );
+    #if DEBUG_SATELLITE_TX
+        Serial.println("[SAT] DRY RUN: ACK not transmitted");
+
+        return true;
+    #else
+        return modem_.SendBinary(
+            RAW_TOPIC,
+            buffer,
+            encodedLength
+        );
+    #endif
 }
 
 bool SatelliteManager::IsReady() const
@@ -381,4 +409,98 @@ bool SatelliteManager::
 WasLastSendSuccessful() const
 {
     return modem_.WasLastSendSuccessful();
+}
+
+bool SatelliteManager::SendAlarm(
+    TelemetryPacket& packet,
+    bool firstAttempt)
+{
+    if (packet.type != Telemetry::Type::EMERGENCY &&
+        packet.type != Telemetry::Type::TAMPER)
+    {
+        return false;
+    }
+
+    if (firstAttempt)
+    {
+        packet.sequence = sequence_;
+    }
+
+    if (!SendPacket(packet))
+    {
+        return false;
+    }
+
+    if (firstAttempt)
+    {
+        ++sequence_;
+    }
+
+#if DEBUG_SATELLITE_TX
+    alarmResultSuccess_ = true;
+    alarmResultReady_ = true;
+#else
+    alarmTxActive_ = true;
+#endif
+
+    return true;
+}
+
+bool SatelliteManager::ConsumeAlarmResult(
+    bool& success)
+{
+    if (!alarmResultReady_)
+    {
+        return false;
+    }
+
+    success = alarmResultSuccess_;
+    alarmResultReady_ = false;
+
+    return true;
+}
+
+bool SatelliteManager::SendPacket(
+    const TelemetryPacket& packet)
+{
+    if (!initialized_ || IsBusy())
+    {
+        return false;
+    }
+
+    if (!TelemetryEncoder::Encode(
+            packet,
+            txBuffer_,
+            sizeof(txBuffer_)))
+    {
+        Serial.println("[SAT] Packet encoding failed");
+
+        return false;
+    }
+
+    Serial.print("[SAT] TX HEX: ");
+
+    for (size_t i = 0; i < sizeof(txBuffer_); ++i)
+    {
+        Serial.printf(
+            "%02X",
+            static_cast<unsigned>(txBuffer_[i])
+        );
+    }
+
+    Serial.println();
+
+#if DEBUG_SATELLITE_TX
+    Serial.println(
+        "[SAT] DRY RUN: no satellite transmission"
+    );
+
+    return true;
+#else
+    return modem_.SendBinary(
+        RAW_TOPIC,
+        txBuffer_,
+        sizeof(txBuffer_)
+    );
+#endif
 }

@@ -50,6 +50,8 @@ public:
 
     bool HasIncomingMessage() const;
 
+    bool ConsumeSendResult(bool& success);
+
   
 
 private:

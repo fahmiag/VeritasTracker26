@@ -1,104 +1,294 @@
 #include "AlarmManager.h"
 
-AlarmManager::AlarmManager(InputConfig emergency, InputConfig tamper,
-                           uint32_t retryMs)
-    : emergency_{emergency}, tamper_{tamper}, retryMs_(retryMs) {}
+#include "../config/PinMap.h"
 
-bool AlarmManager::Input::Read() const {
-    return (digitalRead(config.pin) == LOW) == config.activeLow;
+bool AlarmManager::Read(const Input& input)
+{
+    return (digitalRead(input.pin) == LOW) == input.activeLow;
 }
-void AlarmManager::Input::Begin(uint32_t now) {
-    pinMode(config.pin, config.mode);
-    candidate = Read();
-    stable = false; // An active input at startup is debounced then reported.
-    changedAt = now;
-}
-bool AlarmManager::Input::Sample(uint32_t now) {
-    const bool value = Read();
-    if (value != candidate) { candidate = value; changedAt = now; }
-    if (candidate != stable && uint32_t(now - changedAt) >= config.debounceMs) {
-        stable = candidate;
-        return true;
+
+void AlarmManager::Begin()
+{
+    if (initialized_)
+    {
+        return;
     }
-    return false;
-}
-void AlarmManager::Begin(bool tamperArmed) {
-    if (initialized_) return;
-    tamperArmed_ = tamperArmed;
+
+    emergency_.pin = PinMap::BUTTON_PANIC;
+    emergency_.activeLow = true;
+
+    tamper_.pin = PinMap::BUTTON_ENCLOSURE;
+    tamper_.activeLow = TAMPER_ACTIVE_LOW;
+
+    // GPIO39 requires an external pull-up.
+    pinMode(emergency_.pin, INPUT);
+
+    pinMode(tamper_.pin, INPUT_PULLUP);
+
     const uint32_t now = millis();
-    emergency_.Begin(now);
-    tamper_.Begin(now);
+
+    emergency_.candidate = Read(emergency_);
+    tamper_.candidate = Read(tamper_);
+
+    emergency_.changedAt = now;
+    tamper_.changedAt = now;
+
+    // stable starts false, so an active input at startup
+    // also generates an event after debounce.
     initialized_ = true;
 }
-uint8_t AlarmManager::Status() const {
-    return (emergencyLatched_ ? 1u : 0u) | (tamperLatched_ ? 2u : 0u);
-}
-void AlarmManager::Raise(Kind kind, uint32_t now) {
-    if (kind == Kind::Emergency) emergencyLatched_ = true;
-    else tamperLatched_ = true;
-    Slot& slot = slots_[static_cast<uint8_t>(kind)];
-    // Coalesce repeat activations while this kind is pending or in flight.
-    if (slot.pending || (inFlight_ && active_.kind == kind)) return;
-    slot.event = Event{kind, nextId_++, now, Status()};
-    slot.pending = true;
-}
-void AlarmManager::Update() {
-    if (!initialized_) return;
-    const uint32_t now = millis();
-    if (emergency_.Sample(now) && emergency_.stable) Raise(Kind::Emergency, now);
-    if (tamper_.Sample(now) && tamper_.stable && tamperArmed_) Raise(Kind::Tamper, now);
-}
-bool AlarmManager::EmergencyActive() const { return emergency_.stable; }
-bool AlarmManager::EnclosureOpen() const { return tamper_.stable; }
-void AlarmManager::SetTamperArmed(bool armed) {
-    const bool rearming = armed && !tamperArmed_;
-    tamperArmed_ = armed;
-    if (initialized_ && rearming && tamper_.stable) Raise(Kind::Tamper, millis());
-}
-bool AlarmManager::ClearEmergency() {
-    if (!initialized_ || EmergencyActive() || slots_[0].pending ||
-        (inFlight_ && active_.kind == Kind::Emergency)) return false;
-    emergencyLatched_ = false;
-    return true;
-}
-bool AlarmManager::ClearTamper() {
-    if (!initialized_ || EnclosureOpen() || slots_[1].pending ||
-        (inFlight_ && active_.kind == Kind::Tamper)) return false;
-    tamperLatched_ = false;
-    return true;
-}
-uint8_t AlarmManager::ApplyPositionFlags(uint8_t flags, uint8_t emergencyMask,
-                                        uint8_t tamperMask) const {
-    flags &= static_cast<uint8_t>(~(emergencyMask | tamperMask));
-    if (emergencyLatched_) flags |= emergencyMask;
-    if (tamperLatched_) flags |= tamperMask;
-    return flags;
-}
-bool AlarmManager::HasPending() const { return slots_[0].pending || slots_[1].pending; }
-bool AlarmManager::TakeNext(Event& event) {
-    if (!initialized_ || inFlight_) return false;
-    const uint32_t now = millis();
-    for (auto& slot : slots_) {
-        if (!slot.pending) continue;
-        if (slot.retryWaiting && uint32_t(now - slot.failedAt) < retryMs_) continue;
-        active_ = slot.event;
-        slot.pending = false;
-        inFlight_ = true;
-        slot.retryWaiting = false;
-        event = active_;
-        return true;
+
+bool AlarmManager::Sample(
+    Input& input,
+    uint32_t now)
+{
+    const bool value = Read(input);
+
+    if (value != input.candidate)
+    {
+        input.candidate = value;
+        input.changedAt = now;
     }
+
+    if (input.stable != input.candidate &&
+        uint32_t(now - input.changedAt) >= DEBOUNCE_MS)
+    {
+        input.stable = input.candidate;
+
+        // Return true only on activation.
+        return input.stable;
+    }
+
     return false;
 }
-bool AlarmManager::Complete(uint32_t id, bool success) {
-    if (!inFlight_ || id != active_.id) return false;
-    if (!success) {
-        Slot& slot = slots_[static_cast<uint8_t>(active_.kind)];
-        slot.event = active_;
-        slot.pending = true;
-        slot.failedAt = millis();
-        slot.retryWaiting = true;
+
+void AlarmManager::Update(
+    const TelemetryPacket& navigation)
+{
+    if (!initialized_)
+    {
+        return;
     }
-    inFlight_ = false;
+
+    const uint32_t now = millis();
+
+    const bool emergency =
+        Sample(emergency_, now);
+
+    const bool tamper =
+        Sample(tamper_, now) && tamperArmed_;
+
+    // Set both latches before taking event snapshots.
+    if (emergency)
+    {
+        emergencyLatched_ = true;
+    }
+
+    if (tamper)
+    {
+        tamperLatched_ = true;
+    }
+
+    if (emergency)
+    {
+        Queue(0, navigation);
+    }
+
+    if (tamper)
+    {
+        Queue(1, navigation);
+    }
+}
+
+uint8_t AlarmManager::ApplyStatus(
+    uint8_t status) const
+{
+    status &= static_cast<uint8_t>(
+        ~(Telemetry::EMERGENCY | Telemetry::TAMPER)
+    );
+
+    if (emergencyLatched_)
+    {
+        status |= Telemetry::EMERGENCY;
+    }
+
+    if (tamperLatched_)
+    {
+        status |= Telemetry::TAMPER;
+    }
+
+    return status;
+}
+
+uint8_t AlarmManager::Index(
+    Telemetry::Type type)
+{
+    return type == Telemetry::Type::EMERGENCY ? 0 : 1;
+}
+
+void AlarmManager::Queue(
+    uint8_t index,
+    const TelemetryPacket& navigation)
+{
+    Pending& event = pending_[index];
+
+    // Includes an event currently being transmitted.
+    if (event.pending)
+    {
+        return;
+    }
+
+    event = Pending{};
+
+    // Capture navigation now, rather than at retry time.
+    event.packet = navigation;
+
+    event.packet.type =
+        index == 0
+            ? Telemetry::Type::EMERGENCY
+            : Telemetry::Type::TAMPER;
+
+    event.packet.status =
+        ApplyStatus(event.packet.status);
+
+    event.pending = true;
+}
+
+bool AlarmManager::GetNext(
+    TelemetryPacket& packet,
+    bool& firstAttempt) const
+{
+    if (!initialized_ || activeIndex_ >= 0)
+    {
+        return false;
+    }
+
+    const uint32_t now = millis();
+
+    // Emergency is checked first.
+    for (uint8_t i = 0; i < 2; ++i)
+    {
+        const Pending& event = pending_[i];
+
+        if (!event.pending)
+        {
+            continue;
+        }
+
+        if (event.retryWaiting &&
+            uint32_t(now - event.failedAt) < RETRY_MS)
+        {
+            continue;
+        }
+
+        packet = event.packet;
+
+        firstAttempt =
+            !event.sequenceAssigned;
+
+        return true;
+    }
+
+    return false;
+}
+
+void AlarmManager::Queued(
+    const TelemetryPacket& packet)
+{
+    const uint8_t index =
+        Index(packet.type);
+
+    pending_[index].packet.sequence =
+        packet.sequence;
+
+    pending_[index].sequenceAssigned = true;
+    pending_[index].retryWaiting = false;
+
+    activeIndex_ =
+        static_cast<int8_t>(index);
+}
+
+void AlarmManager::QueueFailed(
+    Telemetry::Type type)
+{
+    Pending& event =
+        pending_[Index(type)];
+
+    event.retryWaiting = true;
+    event.failedAt = millis();
+}
+
+void AlarmManager::Complete(
+    bool success)
+{
+    if (activeIndex_ < 0)
+    {
+        return;
+    }
+
+    Pending& event =
+        pending_[activeIndex_];
+
+    if (success)
+    {
+        event.pending = false;
+    }
+    else
+    {
+        QueueFailed(event.packet.type);
+    }
+
+    activeIndex_ = -1;
+
+    // Successful transmission does not clear the alarm latch.
+}
+
+bool AlarmManager::AcknowledgeEmergency()
+{
+    if (!initialized_ ||
+        emergency_.stable ||
+        Read(emergency_) ||
+        pending_[0].pending)
+    {
+        return false;
+    }
+
+    emergencyLatched_ = false;
+
     return true;
+}
+
+bool AlarmManager::AcknowledgeTamper()
+{
+    if (!initialized_ ||
+        tamper_.stable ||
+        Read(tamper_) ||
+        pending_[1].pending)
+    {
+        return false;
+    }
+
+    tamperLatched_ = false;
+
+    return true;
+}
+
+void AlarmManager::SetTamperArmed(
+    bool armed,
+    const TelemetryPacket& navigation)
+{
+    const bool rearmed =
+        armed && !tamperArmed_;
+
+    tamperArmed_ = armed;
+
+    // Rearming an already-open enclosure raises an alarm.
+    if (initialized_ &&
+        rearmed &&
+        tamper_.stable)
+    {
+        tamperLatched_ = true;
+
+        Queue(1, navigation);
+    }
 }
