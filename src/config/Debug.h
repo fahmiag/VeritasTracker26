@@ -9,7 +9,7 @@
 // 1 = Do NOT transmit through RockBLOCK
 // 0 = Allow satellite telemetry transmission
 //
-#define DEBUG_SATELLITE_TX 0
+#define DEBUG_SATELLITE_TX 1
 
 // 0 = Not Debug
 // 1 = Print Debug String

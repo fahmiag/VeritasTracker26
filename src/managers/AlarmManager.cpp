@@ -72,29 +72,51 @@ void AlarmManager::Update(
 
     const uint32_t now = millis();
 
-    const bool emergency =
+    const bool previousEmergency = emergency_.stable;
+    const bool previousTamper = tamper_.stable;
+
+    const bool emergencyTriggered =
         Sample(emergency_, now);
 
-    const bool tamper =
+    const bool tamperTriggered =
         Sample(tamper_, now) && tamperArmed_;
 
+    // Print physical input changes.
+    if (emergency_.stable != previousEmergency)
+    {
+        Serial.println(
+            emergency_.stable
+                ? "[INPUT] Panic button: PRESSED"
+                : "[INPUT] Panic button: RELEASED"
+        );
+    }
+
+    if (tamper_.stable != previousTamper)
+    {
+        Serial.println(
+            tamper_.stable
+                ? "[INPUT] Tamper switch: ENCLOSURE OPEN"
+                : "[INPUT] Tamper switch: ENCLOSURE CLOSED"
+        );
+    }
+
     // Set both latches before taking event snapshots.
-    if (emergency)
+    if (emergencyTriggered)
     {
         emergencyLatched_ = true;
     }
 
-    if (tamper)
+    if (tamperTriggered)
     {
         tamperLatched_ = true;
     }
 
-    if (emergency)
+    if (emergencyTriggered)
     {
         Queue(0, navigation);
     }
 
-    if (tamper)
+    if (tamperTriggered)
     {
         Queue(1, navigation);
     }

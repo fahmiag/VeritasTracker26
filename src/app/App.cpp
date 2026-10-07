@@ -201,7 +201,7 @@ void App::Begin()
     // -----------------------------------------
     // Alarm manager
     // -----------------------------------------
-    alarmManager_.Begin();
+   // alarmManager_.Begin();
 
 
     // -----------------------------------------
@@ -293,9 +293,9 @@ void App::Run()
 
     }
 
-    alarmManager_.Update(
-        BuildTelemetryPacket()
-    );
+    // alarmManager_.Update(
+    //     BuildTelemetryPacket()
+    // );
 
 
     // // -----------------------------------------
