@@ -126,7 +126,9 @@ uint8_t AlarmManager::ApplyStatus(
     uint8_t status) const
 {
     status &= static_cast<uint8_t>(
-        ~(Telemetry::EMERGENCY | Telemetry::TAMPER)
+        ~(Telemetry::EMERGENCY |
+          Telemetry::TAMPER |
+          Telemetry::PSU_POWER)
     );
 
     if (emergencyLatched_)
@@ -139,36 +141,61 @@ uint8_t AlarmManager::ApplyStatus(
         status |= Telemetry::TAMPER;
     }
 
+    if (powerSource_ == 0)
+    {
+        status |= Telemetry::PSU_POWER;
+    }
+
     return status;
 }
 
 uint8_t AlarmManager::Index(
     Telemetry::Type type)
 {
-    return type == Telemetry::Type::EMERGENCY ? 0 : 1;
+    switch (type)
+    {
+        case Telemetry::Type::EMERGENCY:
+            return 0;
+
+        case Telemetry::Type::TAMPER:
+            return 1;
+
+        case Telemetry::Type::POWER_LOSS:
+            return 2;
+
+        default:
+            return EVENT_COUNT;
+    }
 }
 
 void AlarmManager::Queue(
     uint8_t index,
     const TelemetryPacket& navigation)
 {
+    if (index >= EVENT_COUNT)
+    {
+        return;
+    }
+
     Pending& event = pending_[index];
 
-    // Includes an event currently being transmitted.
+    // Combine repeated events while one is outstanding.
     if (event.pending)
     {
         return;
     }
 
+    const Telemetry::Type types[EVENT_COUNT] =
+    {
+        Telemetry::Type::EMERGENCY,
+        Telemetry::Type::TAMPER,
+        Telemetry::Type::POWER_LOSS
+    };
+
     event = Pending{};
 
-    // Capture navigation now, rather than at retry time.
     event.packet = navigation;
-
-    event.packet.type =
-        index == 0
-            ? Telemetry::Type::EMERGENCY
-            : Telemetry::Type::TAMPER;
+    event.packet.type = types[index];
 
     event.packet.status =
         ApplyStatus(event.packet.status);
@@ -188,7 +215,7 @@ bool AlarmManager::GetNext(
     const uint32_t now = millis();
 
     // Emergency is checked first.
-    for (uint8_t i = 0; i < 2; ++i)
+    for (uint8_t i = 0; i < EVENT_COUNT; ++i)
     {
         const Pending& event = pending_[i];
 
@@ -213,28 +240,34 @@ bool AlarmManager::GetNext(
 
     return false;
 }
-
 void AlarmManager::Queued(
     const TelemetryPacket& packet)
 {
-    const uint8_t index =
-        Index(packet.type);
+    const uint8_t index = Index(packet.type);
 
-    pending_[index].packet.sequence =
-        packet.sequence;
+    if (index >= EVENT_COUNT)
+    {
+        return;
+    }
 
+    pending_[index].packet.sequence = packet.sequence;
     pending_[index].sequenceAssigned = true;
     pending_[index].retryWaiting = false;
 
-    activeIndex_ =
-        static_cast<int8_t>(index);
+    activeIndex_ = static_cast<int8_t>(index);
 }
 
 void AlarmManager::QueueFailed(
     Telemetry::Type type)
 {
-    Pending& event =
-        pending_[Index(type)];
+    const uint8_t index = Index(type);
+
+    if (index >= EVENT_COUNT)
+    {
+        return;
+    }
+
+    Pending& event = pending_[index];
 
     event.retryWaiting = true;
     event.failedAt = millis();
@@ -312,5 +345,67 @@ void AlarmManager::SetTamperArmed(
         tamperLatched_ = true;
 
         Queue(1, navigation);
+    }
+}
+
+void AlarmManager::UpdatePowerSource(
+    bool onPsu,
+    bool onBattery,
+    const TelemetryPacket& navigation)
+{
+    if (!initialized_)
+    {
+        return;
+    }
+
+    // These must describe one selected source.
+    if (onPsu && onBattery)
+    {
+        return;
+    }
+
+    const int8_t source =
+        onPsu ? 0 : (onBattery ? 1 : 2);
+
+    const uint32_t now = millis();
+
+    // Establish the startup baseline without generating an alert.
+    if (powerSource_ < 0)
+    {
+        powerSource_ = source;
+        candidatePowerSource_ = source;
+        powerCandidateSince_ = now;
+
+        return;
+    }
+
+    if (source != candidatePowerSource_)
+    {
+        candidatePowerSource_ = source;
+        powerCandidateSince_ = now;
+    }
+
+    if (candidatePowerSource_ == powerSource_)
+    {
+        return;
+    }
+
+    // Require the new source to remain stable.
+    if (uint32_t(now - powerCandidateSince_) <
+        POWER_CONFIRM_MS)
+    {
+        return;
+    }
+
+    const bool psuToBattery =
+        powerSource_ == 0 &&
+        candidatePowerSource_ == 1;
+
+    powerSource_ = candidatePowerSource_;
+
+    if (psuToBattery)
+    {
+        // Queue() captures navigation and the updated PSU flag.
+        Queue(2, navigation);
     }
 }

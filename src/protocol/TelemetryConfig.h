@@ -15,6 +15,7 @@ namespace Telemetry
         ACK          = 0x02,
         EMERGENCY    = 0x03,
         TAMPER       = 0x04,
+        POWER_LOSS   = 0x05,
         SET_INTERVAL = 0x80
     };
 
@@ -29,7 +30,8 @@ namespace Telemetry
     constexpr uint8_t EMERGENCY      = 0x20;
     constexpr uint8_t TAMPER         = 0x40;
 
-    constexpr uint8_t RESERVED_MASK  = 0x80;
+    constexpr uint8_t PSU_POWER     = 0x80;
+    constexpr uint8_t RESERVED_MASK = 0x00;
     
 
     enum class PositionSource : uint8_t

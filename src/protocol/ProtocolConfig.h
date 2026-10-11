@@ -11,6 +11,7 @@ namespace Protocol
     constexpr uint8_t TYPE_ACK          = 0x02;
     constexpr uint8_t TYPE_EMERGENCY = 0x03;
     constexpr uint8_t TYPE_TAMPER    = 0x04;
+    constexpr uint8_t TYPE_POWER_LOSS = 0x05;
     constexpr uint8_t TYPE_SET_INTERVAL = 0x80;
 
     constexpr size_t HEADER_SIZE = 5;

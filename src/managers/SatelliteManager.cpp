@@ -416,7 +416,8 @@ bool SatelliteManager::SendAlarm(
     bool firstAttempt)
 {
     if (packet.type != Telemetry::Type::EMERGENCY &&
-        packet.type != Telemetry::Type::TAMPER)
+        packet.type != Telemetry::Type::TAMPER &&
+        packet.type != Telemetry::Type::POWER_LOSS)
     {
         return false;
     }

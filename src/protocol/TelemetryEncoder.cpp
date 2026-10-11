@@ -65,7 +65,8 @@ bool TelemetryEncoder::Encode(
 
     if (packet.type != Telemetry::Type::POSITION&&
         packet.type != Telemetry::Type::EMERGENCY &&
-        packet.type != Telemetry::Type::TAMPER)
+        packet.type != Telemetry::Type::TAMPER &&
+        packet.type != Telemetry::Type::POWER_LOSS)
     {
         return false;
     }

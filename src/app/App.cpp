@@ -230,7 +230,7 @@ void App::Run()
     // Current time
     // -----------------------------------------
 
-    uint32_t now = millis();
+    
 
     // // -----------------------------------------
     // // Status LED
@@ -245,6 +245,7 @@ void App::Run()
     // // -----------------------------------------
 
      gpsManager_.Update();
+     uint32_t now = millis();
 
 
     // // -----------------------------------------
@@ -253,7 +254,10 @@ void App::Run()
 
   //  headingManager_.Update();
     
-
+    // // -----------------------------------------
+    // // Voltage
+    // // -----------------------------------------
+    voltageMonitor_.Update();
 
     // // -----------------------------------------
     // // Get current position
@@ -334,10 +338,7 @@ void App::Run()
     // bool tamperCleared =
     //     alarmManager_.AcknowledgeTamper();
 
-    // // -----------------------------------------
-    // // Voltage
-    // // -----------------------------------------
-    voltageMonitor_.Update();
+
     
     // // -----------------------------------------
     // // OLED
@@ -392,11 +393,23 @@ if (satelliteManager_.IsReady() &&
         {
             alarmManager_.Queued(alarmPacket);
 
-            Serial.println(
-                alarmPacket.type == Telemetry::Type::EMERGENCY
-                    ? "[ALARM] Emergency message queued"
-                    : "[ALARM] Tamper message queued"
-            );
+            switch (alarmPacket.type)
+            {
+                case Telemetry::Type::EMERGENCY:
+                    Serial.println("[ALARM] Emergency message queued");
+                    break;
+
+                case Telemetry::Type::TAMPER:
+                    Serial.println("[ALARM] Tamper message queued");
+                    break;
+
+                case Telemetry::Type::POWER_LOSS:
+                    Serial.println("[ALARM] PSU-to-battery message queued");
+                    break;
+
+                default:
+                    break;
+            }
         }
         else
         {

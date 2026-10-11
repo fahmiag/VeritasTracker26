@@ -58,6 +58,17 @@ public:
         const TelemetryPacket& navigation
     );
 
+    // Supply the selected power source, not simply whether voltage exists.
+    //
+    // PSU:     onPsu=true,  onBattery=false
+    // Battery: onPsu=false, onBattery=true
+    // Other:   onPsu=false, onBattery=false
+    void UpdatePowerSource(
+        bool onPsu,
+        bool onBattery,
+        const TelemetryPacket& navigation
+);
+
 private:
     struct Input
     {
@@ -108,7 +119,12 @@ private:
     Input tamper_{};
 
     // Index 0 = emergency; index 1 = tamper.
-    Pending pending_[2]{};
+    //Pending pending_[2]{};
+
+    static constexpr uint8_t EVENT_COUNT = 3;
+
+    // 0 = emergency, 1 = tamper, 2 = power loss
+    Pending pending_[EVENT_COUNT]{};
 
     int8_t activeIndex_ = -1;
 
@@ -117,4 +133,12 @@ private:
     bool emergencyLatched_ = false;
     bool tamperLatched_ = false;
     bool tamperArmed_ = true;
+
+    static constexpr uint32_t POWER_CONFIRM_MS = 500;
+
+    // -1 = not initialized, 0 = PSU, 1 = battery, 2 = other
+    int8_t powerSource_ = -1;
+    int8_t candidatePowerSource_ = -1;
+
+    uint32_t powerCandidateSince_ = 0;
 };
