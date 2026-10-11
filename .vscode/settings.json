@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
         "adafruit",
+        "blox",
         "devkit",
         "espressif",
         "Furuno",
@@ -8,6 +9,7 @@
         "mikalhart",
         "MOSI",
         "OLED",
-        "ROCKBLOCK"
+        "ROCKBLOCK",
+        "VSPI"
     ]
 }

@@ -37,6 +37,8 @@ private:
 
     HeadingData heading_;
 
+    bool initialized_ = false;
+
     // -------------------------------------------------
     // PGN processing
     // -------------------------------------------------

@@ -328,11 +328,11 @@ void App::Run()
     satelliteStatus_.signal = -1; //current RockBLOCK wrapper does not expose signal strength yet.
 
     // Returns false while the input is active or its alert is outstanding.
-    bool emergencyCleared =
-        alarmManager_.AcknowledgeEmergency();
+    // bool emergencyCleared =
+    //     alarmManager_.AcknowledgeEmergency();
 
-    bool tamperCleared =
-        alarmManager_.AcknowledgeTamper();
+    // bool tamperCleared =
+    //     alarmManager_.AcknowledgeTamper();
 
     // // -----------------------------------------
     // // Voltage

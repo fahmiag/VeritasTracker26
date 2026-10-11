@@ -30,6 +30,8 @@ bool SCX20CAN::Begin()
     heading_ = HeadingData{};
     heading_.source = HeadingSource::SCX20;
 
+    initialized_ = false;
+
     ResetFastPacket();
 
 
@@ -81,6 +83,7 @@ bool SCX20CAN::Begin()
         "[SCX20] CAN BUS initialized"
     );
 
+    initialized_ = true;
     return true;
 }
 
@@ -91,8 +94,46 @@ bool SCX20CAN::Begin()
 
 void SCX20CAN::Update()
 {
-    uint8_t len = 0;
-    uint8_t buf[8];
+
+    if (!initialized_)
+    {
+        return;
+    }
+
+
+    // Limit work per application loop so other modules can run.
+    constexpr uint8_t MAX_FRAMES_PER_UPDATE = 8;
+
+    for (uint8_t count = 0;
+         count < MAX_FRAMES_PER_UPDATE;
+         ++count)
+    {
+        if (can_.checkReceive() != CAN_MSGAVAIL)
+        {
+            break;
+        }
+
+        uint8_t len = 0;
+        uint8_t buffer[8]{};
+
+        if (can_.readMsgBuf(&len, buffer) != CAN_OK)
+        {
+            break;
+        }
+
+        if (len == 0 || len > sizeof(buffer))
+        {
+            continue;
+        }
+
+        ProcessMessage(
+            can_.getCanId(),
+            len,
+            buffer);
+    }
+
+    // uint8_t len = 0;
+    // uint8_t buf[8];
 
     /*
      * IMPORTANT:
@@ -103,22 +144,22 @@ void SCX20CAN::Update()
      * in the MCP2515 receive buffer.
      */
 
-    while (CAN_MSGAVAIL == can_.checkReceive())
-    {
-        can_.readMsgBuf(
-            &len,
-            buf
-        );
+    // while (CAN_MSGAVAIL == can_.checkReceive())
+    // {
+    //     can_.readMsgBuf(
+    //         &len,
+    //         buf
+    //     );
 
-        uint32_t canId =
-            can_.getCanId();
+    //     uint32_t canId =
+    //         can_.getCanId();
 
-        ProcessMessage(
-            canId,
-            len,
-            buf
-        );
-    }
+    //     ProcessMessage(
+    //         canId,
+    //         len,
+    //         buf
+    //     );
+    // }
 }
 
 
