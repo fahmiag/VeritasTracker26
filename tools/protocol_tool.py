@@ -2,6 +2,7 @@
 
 import argparse
 import base64
+import binascii
 import sys
 from datetime import datetime, timezone
 
@@ -14,6 +15,9 @@ PROTOCOL_VERSION = 0x01
 
 TYPE_POSITION = 0x01
 TYPE_ACK = 0x02
+TYPE_EMERGENCY = 0x03
+TYPE_TAMPER = 0x04
+TYPE_POWER_LOSS = 0x05
 TYPE_SET_INTERVAL = 0x80
 
 HEADER_SIZE = 5
@@ -27,8 +31,42 @@ SET_INTERVAL_PAYLOAD_SIZE = 2
 MESSAGE_TYPE_NAMES = {
     TYPE_POSITION: "POSITION",
     TYPE_ACK: "ACK",
+    TYPE_EMERGENCY: "EMERGENCY",
+    TYPE_TAMPER: "TAMPER",
+    TYPE_POWER_LOSS: "POWER_LOSS",
     TYPE_SET_INTERVAL: "SET_INTERVAL",
 }
+
+
+NAVIGATION_TYPES = (
+    TYPE_POSITION, TYPE_EMERGENCY, TYPE_TAMPER, TYPE_POWER_LOSS
+)
+
+PAYLOAD_SIZES = {
+    **{message_type: POSITION_PAYLOAD_SIZE for message_type in NAVIGATION_TYPES},
+    TYPE_ACK: ACK_PAYLOAD_SIZE,
+    TYPE_SET_INTERVAL: SET_INTERVAL_PAYLOAD_SIZE,
+}
+
+# Wire ACK values from Protocol::AckError, used by ProtocolEncoder.
+ACK_RESULT_NAMES = {0x00: "SUCCESS", 0x01: "FAILED"}
+ACK_ERROR_NAMES = {
+    0x00: "NONE",
+    0x01: "INVALID_COMMAND",
+    0x02: "INVALID_VALUE",
+    0x03: "UNSUPPORTED_VERSION",
+    0x04: "INVALID_CRC",
+    0x05: "INTERNAL_ERROR",
+}
+
+STATUS_POSITION_VALID = 0x01
+STATUS_COG_VALID = 0x02
+STATUS_HEADING_VALID = 0x04
+STATUS_TIME_VALID = 0x08
+STATUS_SOURCE_SCX20 = 0x10
+STATUS_EMERGENCY = 0x20
+STATUS_TAMPER = 0x40
+STATUS_PSU_POWER = 0x80
 
 
 # ============================================================
@@ -97,6 +135,9 @@ def build_packet(
     payload: bytes
 ) -> bytes:
 
+    if not 0 <= message_type <= 0xFF:
+        raise ValueError("Message type must be between 0 and 255")
+
     if not 0 <= sequence <= 0xFFFF:
         raise ValueError("Sequence must be between 0 and 65535")
 
@@ -163,6 +204,13 @@ def build_ack(
     result: int,
     error: int
 ) -> bytes:
+
+    if not 0 <= acknowledged_type <= 0xFF:
+        raise ValueError("Acknowledged type must be between 0 and 255")
+    if result not in ACK_RESULT_NAMES:
+        raise ValueError("ACK result must be SUCCESS (0) or FAILED (1)")
+    if error not in ACK_ERROR_NAMES:
+        raise ValueError("ACK error must be between 0 and 5")
 
     payload = bytes([
         acknowledged_type,
@@ -301,21 +349,23 @@ def decode_packet(packet: bytes):
     # Message-specific decode
     # --------------------------------------------------------
 
+    required_payload_size = PAYLOAD_SIZES.get(message_type)
+    if required_payload_size is None:
+        print(f"ERROR: Unsupported message type 0x{message_type:02X}")
+        return False
+
+    if payload_length != required_payload_size:
+        print(
+            f"ERROR: {type_name} payload must be "
+            f"{required_payload_size} bytes, got {payload_length}"
+        )
+        return False
+
     if message_type == TYPE_SET_INTERVAL:
-        decode_set_interval(payload)
-
-    elif message_type == TYPE_ACK:
-        decode_ack(payload)
-
-    elif message_type == TYPE_POSITION:
-        decode_position(payload)
-
-    else:
-        print()
-        print("Payload:")
-        print(bytes_to_hex(payload))
-
-    return True
+        return decode_set_interval(payload)
+    if message_type == TYPE_ACK:
+        return decode_ack(payload)
+    return decode_position(payload, message_type)
 
 
 # ============================================================
@@ -335,7 +385,7 @@ def decode_set_interval(payload: bytes):
             f"{SET_INTERVAL_PAYLOAD_SIZE} bytes"
         )
 
-        return
+        return False
 
     interval_minutes = read_uint16_be(
         payload
@@ -352,6 +402,9 @@ def decode_set_interval(payload: bytes):
         print("Telemetry         : ENABLED")
     else:
         print("Telemetry         : INVALID VALUE")
+        return False
+
+    return True
 
 
 # ============================================================
@@ -371,7 +424,7 @@ def decode_ack(payload: bytes):
             f"{ACK_PAYLOAD_SIZE} bytes"
         )
 
-        return
+        return False
 
     acknowledged_type = payload[0]
     result = payload[1]
@@ -390,34 +443,40 @@ def decode_ack(payload: bytes):
 
     print(
         f"Result           : "
-        f"{'SUCCESS' if result == 0 else 'FAILED'} "
+        f"{ACK_RESULT_NAMES.get(result, 'UNKNOWN')} "
         f"(0x{result:02X})"
     )
 
     print(
         f"Error Code       : "
-        f"0x{error:02X}"
+        f"{ACK_ERROR_NAMES.get(error, 'UNKNOWN')} (0x{error:02X})"
     )
+
+    if result not in ACK_RESULT_NAMES or error not in ACK_ERROR_NAMES:
+        print("ERROR: Unsupported ACK result or error code")
+        return False
+
+    return True
 
 
 # ============================================================
 # Decode POSITION
 # ============================================================
 
-def decode_position(payload: bytes):
+def decode_position(payload: bytes, message_type: int = TYPE_POSITION):
 
     print()
     print("----------------------------------------")
-    print(" POSITION")
+    print(f" {MESSAGE_TYPE_NAMES[message_type]}")
     print("----------------------------------------")
 
     if len(payload) != POSITION_PAYLOAD_SIZE:
         print(
-            f"ERROR: POSITION payload must be "
+            f"ERROR: {MESSAGE_TYPE_NAMES[message_type]} payload must be "
             f"{POSITION_PAYLOAD_SIZE} bytes"
         )
 
-        return
+        return False
 
     position_status = payload[0]
 
@@ -442,23 +501,23 @@ def decode_position(payload: bytes):
     )
 
     position_valid = bool(
-        position_status & (1 << 0)
+        position_status & STATUS_POSITION_VALID
     )
 
     cog_valid = bool(
-        position_status & (1 << 1)
+        position_status & STATUS_COG_VALID
     )
 
     heading_valid = bool(
-        position_status & (1 << 2)
+        position_status & STATUS_HEADING_VALID
     )
 
     time_valid = bool(
-        position_status & (1 << 3)
+        position_status & STATUS_TIME_VALID
     )
 
     source_scx20 = bool(
-        position_status & (1 << 4)
+        position_status & STATUS_SOURCE_SCX20
     )
 
     source = (
@@ -466,6 +525,10 @@ def decode_position(payload: bytes):
         if source_scx20
         else "u-blox"
     )
+
+    emergency = bool(position_status & STATUS_EMERGENCY)
+    tamper = bool(position_status & STATUS_TAMPER)
+    powered_by_psu = bool(position_status & STATUS_PSU_POWER)
 
     latitude = latitude_raw / 10_000_000.0
     longitude = longitude_raw / 10_000_000.0
@@ -504,37 +567,41 @@ def decode_position(payload: bytes):
 
     print()
 
+    print(f"Emergency Latch : {'ACTIVE' if emergency else 'CLEAR'}")
+    print(f"Tamper Latch    : {'ACTIVE' if tamper else 'CLEAR'}")
+    print(f"PSU Power       : {'YES' if powered_by_psu else 'NO (battery/USB/unknown)'}")
     print(f"Timestamp       : {timestamp}")
 
-    try:
-        utc_time = datetime.fromtimestamp(
-            timestamp,
-            tz=timezone.utc
-        )
-
-        print(
-            f"UTC Time        : "
-            f"{utc_time.isoformat()}"
-        )
-
-    except (ValueError, OSError, OverflowError):
-        print("UTC Time        : Invalid timestamp")
+    if not time_valid:
+        print("UTC Time        : INVALID (TIME_VALID=0)")
+    else:
+        try:
+            utc_time = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+            print(f"UTC Time        : {utc_time.isoformat()}")
+        except (ValueError, OSError, OverflowError):
+            print("UTC Time        : Invalid timestamp")
 
     print(
-        f"Latitude        : {latitude:.7f}°"
+        f"Latitude        : {latitude:.7f}Â°"
+        f"{'' if position_valid else ' (INVALID)'}"
     )
 
     print(
-        f"Longitude       : {longitude:.7f}°"
+        f"Longitude       : {longitude:.7f}Â°"
+        f"{'' if position_valid else ' (INVALID)'}"
     )
 
     print(
-        f"COG             : {cog:.2f}°"
+        f"COG             : {cog:.2f}Â°"
+        f"{'' if cog_valid else ' (INVALID)'}"
     )
 
     print(
-        f"Heading         : {heading:.2f}°"
+        f"Heading         : {heading:.2f}Â°"
+        f"{'' if heading_valid else ' (INVALID)'}"
     )
+
+    return True
 
 
 # ============================================================
@@ -606,7 +673,7 @@ def command_decode_base64(args):
             validate=True
         )
 
-    except Exception:
+    except (ValueError, binascii.Error):
         print("ERROR: Invalid Base64 data")
         sys.exit(1)
 
@@ -719,4 +786,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()
