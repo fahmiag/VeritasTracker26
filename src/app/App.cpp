@@ -402,7 +402,7 @@ if (satelliteManager_.IsReady() &&
                 case Telemetry::Type::TAMPER:
                     Serial.println("[ALARM] Tamper message queued");
                     break;
-
+                    
                 case Telemetry::Type::POWER_LOSS:
                     Serial.println("[ALARM] PSU-to-battery message queued");
                     break;
