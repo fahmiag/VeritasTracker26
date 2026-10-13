@@ -97,6 +97,7 @@ bool TelemetryEncoder::Encode(
     WriteInt32BE(buffer, index, packet.longitude);
     WriteUint16BE(buffer, index, packet.cog);
     WriteUint16BE(buffer, index, packet.heading);
+    WriteUint16BE(buffer, index, packet.systemVoltageMv);
 
     // CRC covers Version through Payload.
     const uint16_t crc = Crc16(buffer, index);

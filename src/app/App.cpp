@@ -297,6 +297,18 @@ void App::Run()
 
     }
 
+    const VoltageData& voltage =
+    voltageMonitor_.GetData();
+
+    if (voltage.valid)
+    {
+        alarmManager_.UpdatePowerSource(
+            voltage.source == PowerSource::PSU,
+            voltage.source == PowerSource::BATTERY,
+            BuildTelemetryPacket()
+        );
+    }
+
     alarmManager_.Update(
         BuildTelemetryPacket()
     );
@@ -674,6 +686,23 @@ TelemetryPacket App::BuildTelemetryPacket() const
 
     packet.status =
         alarmManager_.ApplyStatus(packet.status);
+
+    const auto& voltage = voltageMonitor_.GetData();
+
+    if (voltage.valid &&
+        std::isfinite(voltage.system) &&
+        voltage.system >= 0.0f)
+    {
+        const double millivolts =
+            static_cast<double>(voltage.system) * 1000.0;
+
+        // Rounded reading must fit without using the unavailable marker.
+        if (millivolts < 65534.5)
+        {
+            packet.systemVoltageMv =
+                static_cast<uint16_t>(millivolts + 0.5);
+        }
+    }
 
     return packet;
 }

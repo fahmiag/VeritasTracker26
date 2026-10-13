@@ -18,5 +18,8 @@ struct TelemetryPacket
     int32_t latitude = 0;
     int32_t longitude = 0;
     uint16_t cog = 0;
-    uint16_t heading = 0;
+    uint16_t heading = 40000;
+
+    // Millivolts; 0xFFFF means unavailable.
+    uint16_t systemVoltageMv = 0xFFFF;
 };

@@ -1,5 +1,5 @@
 #include "ConfigurationManager.h"
-#include "../config/Debug.h"
+
 
 bool ConfigurationManager::Begin()
 {

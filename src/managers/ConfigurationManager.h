@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../config/Debug.h"
+
 #include <Arduino.h>
 #include <Preferences.h>
 

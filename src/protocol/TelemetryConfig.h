@@ -5,7 +5,7 @@
 
 namespace Telemetry
 {
-    constexpr uint8_t VERSION = 1;
+    constexpr uint8_t VERSION = 2;
 
     //the MSB indicate message direction
     //0x8_ means MT.
@@ -58,7 +58,8 @@ namespace Telemetry
 
     constexpr size_t COMMON_HEADER_SIZE = 5;
     constexpr size_t CRC_SIZE = 2;
-    constexpr size_t POSITION_PAYLOAD_SIZE = 17;
+    constexpr size_t POSITION_PAYLOAD_SIZE = 19;
+    
     constexpr size_t POSITION_PACKET_SIZE =
         COMMON_HEADER_SIZE + POSITION_PAYLOAD_SIZE + CRC_SIZE;
     constexpr size_t SET_INTERVAL_PAYLOAD_SIZE = 2;
