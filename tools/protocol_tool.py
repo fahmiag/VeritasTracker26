@@ -4,6 +4,7 @@ import argparse
 import base64
 import binascii
 import sys
+import struct
 from datetime import datetime, timezone
 
 
@@ -11,7 +12,12 @@ from datetime import datetime, timezone
 # Protocol constants
 # ============================================================
 
-PROTOCOL_VERSION = 0x01
+# Control messages remain V1; navigation messages support V1 and V2.
+PROTOCOL_VERSION = 0x01  # Compatibility alias for existing packet builders.
+CONTROL_VERSION = 0x01
+NAVIGATION_VERSION = 0x02
+VOLTAGE_UNAVAILABLE = 0xFFFF
+HEADING_INVALID = 40000  # 400.00 degrees, with HEADING_VALID clear.
 
 TYPE_POSITION = 0x01
 TYPE_ACK = 0x02
@@ -23,7 +29,8 @@ TYPE_SET_INTERVAL = 0x80
 HEADER_SIZE = 5
 CRC_SIZE = 2
 
-POSITION_PAYLOAD_SIZE = 17
+POSITION_PAYLOAD_SIZE = 17  # Legacy V1 payload size.
+NAVIGATION_PAYLOAD_SIZES = {1: 17, 2: 19}
 ACK_PAYLOAD_SIZE = 3
 SET_INTERVAL_PAYLOAD_SIZE = 2
 
@@ -132,8 +139,12 @@ def bytes_to_base64(data: bytes) -> str:
 def build_packet(
     message_type: int,
     sequence: int,
-    payload: bytes
+    payload: bytes,
+    version: int = PROTOCOL_VERSION
 ) -> bytes:
+
+    if not 0 <= version <= 0xFF:
+        raise ValueError("Version must be between 0 and 255")
 
     if not 0 <= message_type <= 0xFF:
         raise ValueError("Message type must be between 0 and 255")
@@ -147,7 +158,7 @@ def build_packet(
     packet = bytearray()
 
     # Header
-    packet.append(PROTOCOL_VERSION)
+    packet.append(version)
     packet.append(message_type)
 
     packet.extend(
@@ -167,6 +178,51 @@ def build_packet(
     )
 
     return bytes(packet)
+
+
+def build_navigation(
+    message_type: int,
+    sequence: int,
+    *,
+    status: int = 0,
+    timestamp: int = 0,
+    latitude_raw: int = 0,
+    longitude_raw: int = 0,
+    cog_raw: int = 0,
+    heading_raw: int = HEADING_INVALID,
+    system_voltage_mv: int = VOLTAGE_UNAVAILABLE,
+    version: int = NAVIGATION_VERSION
+) -> bytes:
+    """Build navigation test packets using raw wire units and explicit flags.
+
+    Coordinates use degrees * 10,000,000; angles use degrees * 100.
+    The source bit is supplied in status; the firmware encoder derives it
+    from positionSource. Values are not converted from floating point here.
+    """
+    if message_type not in NAVIGATION_TYPES:
+        raise ValueError("Type must be POSITION, EMERGENCY, TAMPER or POWER_LOSS")
+    if version not in NAVIGATION_PAYLOAD_SIZES:
+        raise ValueError("Navigation version must be 1 or 2")
+    fields = (
+        ("Status", status, 0, 255),
+        ("Timestamp", timestamp, 0, 0xFFFFFFFF),
+        ("Latitude raw", latitude_raw, -0x80000000, 0x7FFFFFFF),
+        ("Longitude raw", longitude_raw, -0x80000000, 0x7FFFFFFF),
+        ("COG raw", cog_raw, 0, 65535),
+        ("Heading raw", heading_raw, 0, 65535),
+        ("System voltage mV", system_voltage_mv, 0, 65535),
+    )
+    for name, value, minimum, maximum in fields:
+        if not isinstance(value, int) or not minimum <= value <= maximum:
+            raise ValueError(f"{name} must be an integer between {minimum} and {maximum}")
+    if version == 1 and system_voltage_mv != VOLTAGE_UNAVAILABLE:
+        raise ValueError("Version 1 has no system voltage field")
+    payload = struct.pack(
+        ">BIiiHH", status, timestamp, latitude_raw, longitude_raw, cog_raw, heading_raw
+    )
+    if version == NAVIGATION_VERSION:
+        payload += write_uint16_be(system_voltage_mv)
+    return build_packet(message_type, sequence, payload, version=version)
 
 
 # ============================================================
@@ -190,7 +246,8 @@ def build_set_interval(
     return build_packet(
         TYPE_SET_INTERVAL,
         sequence,
-        payload
+        payload,
+        version=CONTROL_VERSION
     )
 
 
@@ -221,7 +278,8 @@ def build_ack(
     return build_packet(
         TYPE_ACK,
         sequence,
-        payload
+        payload,
+        version=CONTROL_VERSION
     )
 
 
@@ -284,12 +342,16 @@ def decode_packet(packet: bytes):
     # Version
     # --------------------------------------------------------
 
-    if version != PROTOCOL_VERSION:
-        print()
-        print(
-            f"ERROR: Unsupported protocol version {version}"
-        )
+    if message_type in NAVIGATION_TYPES:
+        required_payload_size = NAVIGATION_PAYLOAD_SIZES.get(version)
+    elif message_type in (TYPE_ACK, TYPE_SET_INTERVAL):
+        required_payload_size = PAYLOAD_SIZES[message_type] if version == CONTROL_VERSION else None
+    else:
+        print(f"ERROR: Unsupported message type 0x{message_type:02X}")
+        return False
 
+    if required_payload_size is None:
+        print(f"ERROR: Unsupported protocol version {version} for {type_name}")
         return False
 
     # --------------------------------------------------------
@@ -349,11 +411,6 @@ def decode_packet(packet: bytes):
     # Message-specific decode
     # --------------------------------------------------------
 
-    required_payload_size = PAYLOAD_SIZES.get(message_type)
-    if required_payload_size is None:
-        print(f"ERROR: Unsupported message type 0x{message_type:02X}")
-        return False
-
     if payload_length != required_payload_size:
         print(
             f"ERROR: {type_name} payload must be "
@@ -365,7 +422,7 @@ def decode_packet(packet: bytes):
         return decode_set_interval(payload)
     if message_type == TYPE_ACK:
         return decode_ack(payload)
-    return decode_position(payload, message_type)
+    return decode_position(payload, message_type, version)
 
 
 # ============================================================
@@ -463,17 +520,23 @@ def decode_ack(payload: bytes):
 # Decode POSITION
 # ============================================================
 
-def decode_position(payload: bytes, message_type: int = TYPE_POSITION):
+def decode_position(
+    payload: bytes, message_type: int = TYPE_POSITION, version: int = PROTOCOL_VERSION
+):
 
     print()
     print("----------------------------------------")
     print(f" {MESSAGE_TYPE_NAMES[message_type]}")
     print("----------------------------------------")
 
-    if len(payload) != POSITION_PAYLOAD_SIZE:
+    expected_size = NAVIGATION_PAYLOAD_SIZES.get(version)
+    if expected_size is None:
+        print(f"ERROR: Unsupported navigation version {version}")
+        return False
+    if len(payload) != expected_size:
         print(
-            f"ERROR: {MESSAGE_TYPE_NAMES[message_type]} payload must be "
-            f"{POSITION_PAYLOAD_SIZE} bytes"
+            f"ERROR: {MESSAGE_TYPE_NAMES[message_type]} V{version} payload must be "
+            f"{expected_size} bytes"
         )
 
         return False
@@ -582,24 +645,33 @@ def decode_position(payload: bytes, message_type: int = TYPE_POSITION):
             print("UTC Time        : Invalid timestamp")
 
     print(
-        f"Latitude        : {latitude:.7f}Â°"
+        f"Latitude        : {latitude:.7f}°"
         f"{'' if position_valid else ' (INVALID)'}"
     )
 
     print(
-        f"Longitude       : {longitude:.7f}Â°"
+        f"Longitude       : {longitude:.7f}°"
         f"{'' if position_valid else ' (INVALID)'}"
     )
 
     print(
-        f"COG             : {cog:.2f}Â°"
+        f"COG             : {cog:.2f}°"
         f"{'' if cog_valid else ' (INVALID)'}"
     )
 
     print(
-        f"Heading         : {heading:.2f}Â°"
+        f"Heading         : {heading:.2f}°"
         f"{'' if heading_valid else ' (INVALID)'}"
     )
+
+    if version == NAVIGATION_VERSION:
+        voltage_mv = read_uint16_be(payload[17:19])
+        if voltage_mv == VOLTAGE_UNAVAILABLE:
+            print("System Voltage  : UNAVAILABLE (0xFFFF)")
+        else:
+            print(f"System Voltage  : {voltage_mv / 1000.0:.3f} V ({voltage_mv} mV)")
+    else:
+        print("System Voltage  : NOT PRESENT (version 1)")
 
     return True
 

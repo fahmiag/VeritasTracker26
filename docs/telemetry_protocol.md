@@ -1,24 +1,33 @@
 # Vessel Tracking Telemetry Protocol
 
-**Protocol version:** 1 (unchanged)
+**Navigation versions:** 1 (legacy) and 2 (system voltage)
+
+**Control version:** 1 for SET_INTERVAL and ACK
+
 **Byte order:** Big-endian (network byte order)
+
 **Application CRC:** CRC-16/XMODEM (CCITT polynomial): poly `0x1021`, init
 `0x0000`, refin=false, refout=false, xorout=`0x0000`.
 The check value for ASCII `123456789` is `0x31C3`.
 
-This document describes the firmware at commit
-`219b67cde1fccfc700437f6bb0a5ca1827722ccd`. Wire definitions come from
-`src/protocol/TelemetryConfig.h`, `TelemetryEncoder.cpp`, `ProtocolConfig.h`
-and `ProtocolEncoder.cpp`; event behavior comes from `AlarmManager.cpp` and
-`SatelliteManager.cpp`.
+Checked against firmware commit
+`760009a2b559c2db42950c261c5bb62e73f7e6fe`.
+The current firmware sends V2 navigation messages with system voltage and
+retains V1 for SET_INTERVAL commands and ACKs. The Python tool also decodes
+legacy V1 navigation messages.
+
+Wire definitions come from `src/protocol/TelemetryConfig.h`,
+`TelemetryEncoder.cpp`, `ProtocolConfig.h` and `ProtocolEncoder.cpp`.
+Navigation field population comes from `App::BuildTelemetryPacket()`;
+event behavior comes from `AlarmManager.cpp` and `SatelliteManager.cpp`.
 
 ## 1. Common packet format
 
 | Packet byte(s) | Size | Field | Encoding |
 |---|---:|---|---|
-| 0 | 1 | Version | `uint8`, currently `0x01` |
+| 0 | 1 | Version | `uint8`; navigation: `0x01`/`0x02`, control: `0x01` |
 | 1 | 1 | Type | `uint8` |
-| 2–3 | 2 | Sequence | `uint16` BE |
+| 2â€“3 | 2 | Sequence | `uint16` BE |
 | 4 | 1 | Payload length | `uint8`, excludes header and CRC |
 | 5 through 4+N | N | Payload | Message-specific |
 | 5+N through 6+N | 2 | CRC | `uint16` BE |
@@ -29,14 +38,14 @@ payload length, the supported version and a matching CRC.
 
 ## 2. Message types
 
-| Type | Value | Direction | Payload bytes | Total bytes | Meaning |
+| Type | Value | Direction | Payload bytes (V1 / V2) | Total bytes (V1 / V2) | Meaning |
 |---|---:|---|---:|---:|---|
-| POSITION | `0x01` | Device → server (MO) | 17 | 24 | Periodic navigation report |
-| ACK | `0x02` | Device → server (MO) | 3 | 10 | Command result |
-| EMERGENCY | `0x03` | Device → server (MO) | 17 | 24 | Emergency input activation |
-| TAMPER | `0x04` | Device → server (MO) | 17 | 24 | Armed enclosure opening |
-| POWER_LOSS | `0x05` | Device → server (MO) | 17 | 24 | PSU-to-battery transition |
-| SET_INTERVAL | `0x80` | Server → device (MT) | 2 | 9 | Set periodic reporting interval |
+| POSITION | `0x01` | Device â†’ server (MO) | 17 / 19 | 24 / 26 | Periodic navigation report |
+| ACK | `0x02` | Device â†’ server (MO) | 3 | 10 | Command result |
+| EMERGENCY | `0x03` | Device â†’ server (MO) | 17 / 19 | 24 / 26 | Emergency input activation |
+| TAMPER | `0x04` | Device â†’ server (MO) | 17 / 19 | 24 / 26 | Armed enclosure opening |
+| POWER_LOSS | `0x05` | Device â†’ server (MO) | 17 / 19 | 24 / 26 | PSU-to-battery transition |
+| SET_INTERVAL | `0x80` | Server â†’ device (MT) | 2 | 9 | Set periodic reporting interval |
 
 The message type identifies a dedicated alert. Emergency and tamper status
 bits may also appear in ordinary POSITION reports; those bits do not change
@@ -46,19 +55,22 @@ PSU power, while type `0x05` identifies the transition event.
 ## 3. Shared navigation payload
 
 POSITION, EMERGENCY, TAMPER and POWER_LOSS use exactly the same payload and CRC
-framing. No additional event ID or uptime field is appended.
+framing. V1 has 17 payload bytes and 24 total bytes. V2 has 19 payload bytes and
+26 total bytes. No additional event ID or uptime field is appended.
 
 | Payload byte(s) | Packet byte(s) | Size | Field | Encoding |
 |---|---|---:|---|---|
 | 0 | 5 | 1 | Status | Bit field below |
-| 1–4 | 6–9 | 4 | Timestamp | Unix UTC seconds, `uint32` BE |
-| 5–8 | 10–13 | 4 | Latitude | Signed `int32` BE, degrees × 10,000,000 |
-| 9–12 | 14–17 | 4 | Longitude | Signed `int32` BE, degrees × 10,000,000 |
-| 13–14 | 18–19 | 2 | Course over ground (COG) | `uint16` BE, degrees × 100 |
-| 15–16 | 20–21 | 2 | Heading | `uint16` BE, degrees × 100 |
+| 1â€“4 | 6â€“9 | 4 | Timestamp | Unix UTC seconds, `uint32` BE |
+| 5â€“8 | 10â€“13 | 4 | Latitude | Signed `int32` BE, degrees Ã— 10,000,000 |
+| 9â€“12 | 14â€“17 | 4 | Longitude | Signed `int32` BE, degrees Ã— 10,000,000 |
+| 13â€“14 | 18â€“19 | 2 | Course over ground (COG) | `uint16` BE, degrees Ã— 100 |
+| 15â€“16 | 20â€“21 | 2 | Heading | `uint16` BE, degrees Ã— 100 |
+| 17â€“18 (V2 only) | 22â€“23 | 2 | System voltage | `uint16` BE, millivolts; `0xFFFF` = unavailable |
 
-The CRC occupies packet bytes 22–23. Divide coordinates by `10,000,000` and
-angles by `100` when decoding. Firmware floating-point-to-integer casts truncate.
+The CRC occupies packet bytes 22â€“23 in V1 and 24â€“25 in V2. The V2 CRC covers
+all 24 preceding bytes, including voltage. Divide coordinates by `10,000,000` and
+angles by `100` when decoding. Coordinate and angle casts truncate; system voltage is rounded as described below.
 
 ### Status flags
 
@@ -83,9 +95,46 @@ time. Raw invalid fields can be displayed for diagnostics but must not be used
 for mapping, navigation or timestamp interpretation. Heading validity is
 independent of position validity.
 
-Version 1 has been retained despite the added types and status bits. Older
-server decoders that reject these types or require bits 5–7 to be zero need
-updating.
+### Invalid heading
+
+The current firmware initializes heading to **400.00 degrees**, encoded as
+`40000` (`0x9C40`) in the existing hundredths-of-a-degree field. It leaves
+HEADING_VALID (`0x04`) clear when no valid heading is available. A valid heading
+replaces this marker and sets the flag; the accepted physical range is
+0 degrees inclusive to 360 degrees exclusive.
+
+The decoder displays `400.00Â° (INVALID)` for this marker when HEADING_VALID is
+clear. The validity flag remains authoritative: older V1 firmware may encode
+zero for an invalid heading, and zero is also a legitimate heading when valid.
+No packet length or version change is needed for this sentinel.
+
+### System voltage and version compatibility
+
+V2 carries the measured **system voltage**, not the separate PSU or battery
+voltage. It applies to POSITION, EMERGENCY, TAMPER and POWER_LOSS.
+
+- Encode the reading in millivolts, rounded to the nearest millivolt.
+- `0x0000` through `0xFFFE`: valid encoded values from 0 to 65.534 V.
+- `0xFFFF`: reading unavailable, invalid or out of range; never interpret it
+  as 65.535 V. The maximum rounded valid integer is 65534.
+- Example: 12.345 V â†’ 12345 mV â†’ bytes `30 39`.
+- Voltage availability is independent of POSITION_VALID and TIME_VALID;
+  it can be present in an alert without GPS. There is no new status flag.
+- Alert voltage is captured with its navigation snapshot and retained on retries.
+- V1 has **no** voltage field. Its bytes 22â€“23 are CRC, not voltage.
+
+| Message group | Accepted version | Payload length | Total length |
+|---|---:|---:|---:|
+| Navigation and alerts, legacy | 1 | 17 | 24 |
+| Navigation and alerts, voltage extension | 2 | 19 | 26 |
+| SET_INTERVAL | 1 | 2 | 9 |
+| ACK | 1 | 3 | 10 |
+
+Decoders select the layout using both type and version; they must reject a
+V1 navigation payload of 19 bytes or a V2 payload of 17 bytes. V2 commands and
+ACKs are unsupported. Deploy server support for both navigation versions before
+updating firmware. The V1 status extension already assigned bits 5â€“7; older
+servers that required those bits to be zero also need updating.
 
 ### Alert behavior
 
@@ -98,7 +147,7 @@ updating.
   enclosure raises an event. Disarming does not erase a pending event or latch.
 - POWER_LOSS is not latched. `UpdatePowerSource()` establishes a startup
   baseline without an alert, then requires a changed source to remain stable
-  for 500 ms. Only PSU → battery generates an event. Battery → PSU and startup
+  for 500 ms. Only PSU â†’ battery generates an event. Battery â†’ PSU and startup
   on battery do not generate one.
 - Alert navigation/status are captured when the event is queued, not refreshed
   for retries. Timestamp is the captured GNSS time, not a separately maintained
@@ -115,12 +164,11 @@ updating.
   reboot. A modem operation without a terminal completion can prevent further
   sends; application retries require that operation to finish or be recovered.
 
-**Current integration limitation:** at the commit above, `App::Run()` does not
-call `AlarmManager::UpdatePowerSource()`. The wire type and encoder support are
-present, but automatic POWER_LOSS generation and PSU flag tracking are not
-connected to `VoltageMonitor`; the alarm manager's PSU flag remains clear.
-This document specifies the available format without claiming that this
-missing application integration is active.
+**Current power-source integration:** `App::Run()` passes the selected
+`VoltageMonitor` source to `AlarmManager::UpdatePowerSource()` before polling
+alarm inputs. The PSU flag represents that confirmed source classification,
+not merely the presence of PSU voltage. At source changes it reflects the
+existing 500 ms confirmation interval.
 
 ## 4. SET_INTERVAL
 
@@ -128,10 +176,10 @@ Payload length: **2 bytes**. Total packet: **9 bytes**.
 
 | Payload byte(s) | Size | Field |
 |---|---:|---|
-| 0–1 | 2 | Reporting interval in minutes, `uint16` BE |
+| 0â€“1 | 2 | Reporting interval in minutes, `uint16` BE |
 
 - `0`: disable periodic POSITION reports. This does not disable alarm scheduling.
-- `1–1440`: periodic reporting interval in minutes.
+- `1â€“1440`: periodic reporting interval in minutes.
 - Values above `1440` are rejected by the configuration manager.
 
 The accepted value is stored in NVS. With `DEBUG_SATELLITE_TX=1`, configuration
@@ -191,7 +239,9 @@ boot/session identifier.
 
 ## 7. Python tool and transport
 
-`tools/protocol_tool.py` uses only the Python standard library. Existing CLI
+`tools/protocol_tool.py` uses only the Python standard library. It decodes
+both navigation versions and prints system voltage as volts and millivolts,
+UNAVAILABLE for `0xFFFF`, or NOT PRESENT for V1. Command generation remains V1. Existing CLI
 commands remain available:
 
 ```bash
@@ -208,8 +258,33 @@ The tool does not transmit messages itself. Its Python `build_ack()` helper
 builds test ACK packets; ACK is an MO response, not a supported latch-clear MT
 command.
 
-The decoder supports all six types, prints all status bits and labels invalid
+The decoder supports all six types with the version rules above, prints all status bits and labels invalid
 navigation fields. It returns a nonzero CLI exit status for invalid HEX/Base64,
 version, packet/payload length, CRC, unsupported type, invalid interval or
 undefined ACK result/error values. It does not independently verify GPS
 freshness or the truth of validity flags supplied by the firmware.
+
+### Navigation test packets in Python
+
+The `build_navigation()` helper builds raw-wire test packets, not MT commands.
+Its default navigation version is 2. The default heading is the invalid
+marker `40000`; its default status leaves all navigation validity bits clear. Supply raw integer units and explicit
+status flags; the helper does not claim that GPS or voltage measurements exist.
+
+```python
+from protocol_tool import build_navigation, bytes_to_hex, TYPE_POSITION
+
+packet = build_navigation(
+    TYPE_POSITION,
+    sequence=7,
+    status=0x80,              # PSU selected; GPS/time/angles invalid
+    system_voltage_mv=12345, # 12.345 V
+)
+print(bytes_to_hex(packet))
+```
+
+Use `version=1` for legacy test packets and omit `system_voltage_mv`.
+V2 defaults voltage to the unavailable marker if not supplied. The generic
+`build_packet()` retains a V1 default for compatibility; use `version=2`
+explicitly when providing a manually packed V2 navigation payload. It is a
+low-level framing helper and does not validate type-specific payload sizes.
