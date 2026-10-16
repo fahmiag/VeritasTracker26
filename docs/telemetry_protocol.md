@@ -27,7 +27,7 @@ event behavior comes from `AlarmManager.cpp` and `SatelliteManager.cpp`.
 |---|---:|---|---|
 | 0 | 1 | Version | `uint8`; navigation: `0x01`/`0x02`, control: `0x01` |
 | 1 | 1 | Type | `uint8` |
-| 2â€“3 | 2 | Sequence | `uint16` BE |
+| 2–3 | 2 | Sequence | `uint16` BE |
 | 4 | 1 | Payload length | `uint8`, excludes header and CRC |
 | 5 through 4+N | N | Payload | Message-specific |
 | 5+N through 6+N | 2 | CRC | `uint16` BE |
@@ -40,12 +40,12 @@ payload length, the supported version and a matching CRC.
 
 | Type | Value | Direction | Payload bytes (V1 / V2) | Total bytes (V1 / V2) | Meaning |
 |---|---:|---|---:|---:|---|
-| POSITION | `0x01` | Device â†’ server (MO) | 17 / 19 | 24 / 26 | Periodic navigation report |
-| ACK | `0x02` | Device â†’ server (MO) | 3 | 10 | Command result |
-| EMERGENCY | `0x03` | Device â†’ server (MO) | 17 / 19 | 24 / 26 | Emergency input activation |
-| TAMPER | `0x04` | Device â†’ server (MO) | 17 / 19 | 24 / 26 | Armed enclosure opening |
-| POWER_LOSS | `0x05` | Device â†’ server (MO) | 17 / 19 | 24 / 26 | PSU-to-battery transition |
-| SET_INTERVAL | `0x80` | Server â†’ device (MT) | 2 | 9 | Set periodic reporting interval |
+| POSITION | `0x01` | Device → server (MO) | 17 / 19 | 24 / 26 | Periodic navigation report |
+| ACK | `0x02` | Device → server (MO) | 3 | 10 | Command result |
+| EMERGENCY | `0x03` | Device → server (MO) | 17 / 19 | 24 / 26 | Emergency input activation |
+| TAMPER | `0x04` | Device → server (MO) | 17 / 19 | 24 / 26 | Armed enclosure opening |
+| POWER_LOSS | `0x05` | Device → server (MO) | 17 / 19 | 24 / 26 | PSU-to-battery transition |
+| SET_INTERVAL | `0x80` | Server → device (MT) | 2 | 9 | Set periodic reporting interval |
 
 The message type identifies a dedicated alert. Emergency and tamper status
 bits may also appear in ordinary POSITION reports; those bits do not change
@@ -61,14 +61,14 @@ framing. V1 has 17 payload bytes and 24 total bytes. V2 has 19 payload bytes and
 | Payload byte(s) | Packet byte(s) | Size | Field | Encoding |
 |---|---|---:|---|---|
 | 0 | 5 | 1 | Status | Bit field below |
-| 1â€“4 | 6â€“9 | 4 | Timestamp | Unix UTC seconds, `uint32` BE |
-| 5â€“8 | 10â€“13 | 4 | Latitude | Signed `int32` BE, degrees Ã— 10,000,000 |
-| 9â€“12 | 14â€“17 | 4 | Longitude | Signed `int32` BE, degrees Ã— 10,000,000 |
-| 13â€“14 | 18â€“19 | 2 | Course over ground (COG) | `uint16` BE, degrees Ã— 100 |
-| 15â€“16 | 20â€“21 | 2 | Heading | `uint16` BE, degrees Ã— 100 |
-| 17â€“18 (V2 only) | 22â€“23 | 2 | System voltage | `uint16` BE, millivolts; `0xFFFF` = unavailable |
+| 1–4 | 6–9 | 4 | Timestamp | Unix UTC seconds, `uint32` BE |
+| 5–8 | 10–13 | 4 | Latitude | Signed `int32` BE, degrees × 10,000,000 |
+| 9–12 | 14–17 | 4 | Longitude | Signed `int32` BE, degrees × 10,000,000 |
+| 13–14 | 18–19 | 2 | Course over ground (COG) | `uint16` BE, degrees × 100 |
+| 15–16 | 20–21 | 2 | Heading | `uint16` BE, degrees × 100 |
+| 17–18 (V2 only) | 22–23 | 2 | System voltage | `uint16` BE, millivolts; `0xFFFF` = unavailable |
 
-The CRC occupies packet bytes 22â€“23 in V1 and 24â€“25 in V2. The V2 CRC covers
+The CRC occupies packet bytes 22–23 in V1 and 24–25 in V2. The V2 CRC covers
 all 24 preceding bytes, including voltage. Divide coordinates by `10,000,000` and
 angles by `100` when decoding. Coordinate and angle casts truncate; system voltage is rounded as described below.
 
@@ -103,7 +103,7 @@ HEADING_VALID (`0x04`) clear when no valid heading is available. A valid heading
 replaces this marker and sets the flag; the accepted physical range is
 0 degrees inclusive to 360 degrees exclusive.
 
-The decoder displays `400.00Â° (INVALID)` for this marker when HEADING_VALID is
+The decoder displays `400.00° (INVALID)` for this marker when HEADING_VALID is
 clear. The validity flag remains authoritative: older V1 firmware may encode
 zero for an invalid heading, and zero is also a legitimate heading when valid.
 No packet length or version change is needed for this sentinel.
@@ -117,11 +117,11 @@ voltage. It applies to POSITION, EMERGENCY, TAMPER and POWER_LOSS.
 - `0x0000` through `0xFFFE`: valid encoded values from 0 to 65.534 V.
 - `0xFFFF`: reading unavailable, invalid or out of range; never interpret it
   as 65.535 V. The maximum rounded valid integer is 65534.
-- Example: 12.345 V â†’ 12345 mV â†’ bytes `30 39`.
+- Example: 12.345 V → 12345 mV → bytes `30 39`.
 - Voltage availability is independent of POSITION_VALID and TIME_VALID;
   it can be present in an alert without GPS. There is no new status flag.
 - Alert voltage is captured with its navigation snapshot and retained on retries.
-- V1 has **no** voltage field. Its bytes 22â€“23 are CRC, not voltage.
+- V1 has **no** voltage field. Its bytes 22–23 are CRC, not voltage.
 
 | Message group | Accepted version | Payload length | Total length |
 |---|---:|---:|---:|
@@ -133,7 +133,7 @@ voltage. It applies to POSITION, EMERGENCY, TAMPER and POWER_LOSS.
 Decoders select the layout using both type and version; they must reject a
 V1 navigation payload of 19 bytes or a V2 payload of 17 bytes. V2 commands and
 ACKs are unsupported. Deploy server support for both navigation versions before
-updating firmware. The V1 status extension already assigned bits 5â€“7; older
+updating firmware. The V1 status extension already assigned bits 5–7; older
 servers that required those bits to be zero also need updating.
 
 ### Alert behavior
@@ -147,7 +147,7 @@ servers that required those bits to be zero also need updating.
   enclosure raises an event. Disarming does not erase a pending event or latch.
 - POWER_LOSS is not latched. `UpdatePowerSource()` establishes a startup
   baseline without an alert, then requires a changed source to remain stable
-  for 500 ms. Only PSU â†’ battery generates an event. Battery â†’ PSU and startup
+  for 500 ms. Only PSU → battery generates an event. Battery → PSU and startup
   on battery do not generate one.
 - Alert navigation/status are captured when the event is queued, not refreshed
   for retries. Timestamp is the captured GNSS time, not a separately maintained
@@ -176,10 +176,10 @@ Payload length: **2 bytes**. Total packet: **9 bytes**.
 
 | Payload byte(s) | Size | Field |
 |---|---:|---|
-| 0â€“1 | 2 | Reporting interval in minutes, `uint16` BE |
+| 0–1 | 2 | Reporting interval in minutes, `uint16` BE |
 
 - `0`: disable periodic POSITION reports. This does not disable alarm scheduling.
-- `1â€“1440`: periodic reporting interval in minutes.
+- `1–1440`: periodic reporting interval in minutes.
 - Values above `1440` are rejected by the configuration manager.
 
 The accepted value is stored in NVS. With `DEBUG_SATELLITE_TX=1`, configuration
