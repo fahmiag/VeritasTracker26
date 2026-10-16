@@ -100,16 +100,7 @@ void AlarmManager::Update(
         );
     }
 
-    // Set both latches before taking event snapshots.
-    if (emergencyTriggered)
-    {
-        emergencyLatched_ = true;
-    }
 
-    if (tamperTriggered)
-    {
-        tamperLatched_ = true;
-    }
 
     if (emergencyTriggered)
     {
@@ -131,14 +122,18 @@ uint8_t AlarmManager::ApplyStatus(
           Telemetry::PSU_POWER)
     );
 
-    if (emergencyLatched_)
+    if (initialized_)
     {
-        status |= Telemetry::EMERGENCY;
-    }
+        // Literal GPIO levels: HIGH = 1, LOW = 0.
+        if (digitalRead(emergency_.pin) == HIGH)
+        {
+            status |= Telemetry::EMERGENCY;
+        }
 
-    if (tamperLatched_)
-    {
-        status |= Telemetry::TAMPER;
+        if (digitalRead(tamper_.pin) == HIGH)
+        {
+            status |= Telemetry::TAMPER;
+        }
     }
 
     if (powerSource_ == 0)
@@ -201,6 +196,11 @@ void AlarmManager::Queue(
         ApplyStatus(event.packet.status);
 
     event.pending = true;
+    Serial.printf(
+        "[ALARM] Event queued: type=0x%02X, status=0x%02X\n",
+        static_cast<unsigned>(event.packet.type),
+        static_cast<unsigned>(event.packet.status)
+    );
 }
 
 bool AlarmManager::GetNext(
@@ -298,35 +298,6 @@ void AlarmManager::Complete(
     // Successful transmission does not clear the alarm latch.
 }
 
-bool AlarmManager::AcknowledgeEmergency()
-{
-    if (!initialized_ ||
-        emergency_.stable ||
-        Read(emergency_) ||
-        pending_[0].pending)
-    {
-        return false;
-    }
-
-    emergencyLatched_ = false;
-
-    return true;
-}
-
-bool AlarmManager::AcknowledgeTamper()
-{
-    if (!initialized_ ||
-        tamper_.stable ||
-        Read(tamper_) ||
-        pending_[1].pending)
-    {
-        return false;
-    }
-
-    tamperLatched_ = false;
-
-    return true;
-}
 
 void AlarmManager::SetTamperArmed(
     bool armed,
@@ -342,7 +313,7 @@ void AlarmManager::SetTamperArmed(
         rearmed &&
         tamper_.stable)
     {
-        tamperLatched_ = true;
+       
 
         Queue(1, navigation);
     }

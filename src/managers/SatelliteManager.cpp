@@ -394,8 +394,13 @@ bool SatelliteManager::SendAck(
 
 bool SatelliteManager::IsReady() const
 {
-    return initialized_ &&
-           modem_.IsReady();
+    
+    #if DEBUG_SATELLITE_TX
+        // Permit simulated transmissions without a working modem.
+        return true;
+    #else
+        return initialized_ && modem_.IsReady();
+    #endif
 }
 
 
@@ -464,7 +469,7 @@ bool SatelliteManager::ConsumeAlarmResult(
 bool SatelliteManager::SendPacket(
     const TelemetryPacket& packet)
 {
-    if (!initialized_ || IsBusy())
+    if (!IsReady() || IsBusy())
     {
         return false;
     }

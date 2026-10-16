@@ -630,8 +630,17 @@ def decode_position(
 
     print()
 
-    print(f"Emergency Latch : {'ACTIVE' if emergency else 'CLEAR'}")
-    print(f"Tamper Latch    : {'ACTIVE' if tamper else 'CLEAR'}")
+    #print(f"Emergency Latch : {'ACTIVE' if emergency else 'CLEAR'}")
+    #print(f"Tamper Latch    : {'ACTIVE' if tamper else 'CLEAR'}")
+    print(
+        f"Panic GPIO      : "
+        f"{'HIGH (1), released' if emergency else 'LOW (0), pressed'}"
+    )
+    print(
+        f"Tamper GPIO     : "
+        f"{'HIGH (1), enclosure open' if tamper else 'LOW (0), enclosure closed'}"
+    )
+
     print(f"PSU Power       : {'YES' if powered_by_psu else 'NO (battery/USB/unknown)'}")
     print(f"Timestamp       : {timestamp}")
 

@@ -40,18 +40,18 @@ public:
         return tamper_.stable;
     }
 
-    bool EmergencyLatched() const
-    {
-        return emergencyLatched_;
-    }
+    // bool EmergencyLatched() const
+    // {
+    //     return emergencyLatched_;
+    // }
 
-    bool TamperLatched() const
-    {
-        return tamperLatched_;
-    }
+    // bool TamperLatched() const
+    // {
+    //     return tamperLatched_;
+    // }
 
-    bool AcknowledgeEmergency();
-    bool AcknowledgeTamper();
+    // bool AcknowledgeEmergency();
+    // bool AcknowledgeTamper();
 
     void SetTamperArmed(
         bool armed,
@@ -130,8 +130,8 @@ private:
 
     bool initialized_ = false;
 
-    bool emergencyLatched_ = false;
-    bool tamperLatched_ = false;
+    // bool emergencyLatched_ = false;
+    // bool tamperLatched_ = false;
     bool tamperArmed_ = true;
 
     static constexpr uint32_t POWER_CONFIRM_MS = 500;
