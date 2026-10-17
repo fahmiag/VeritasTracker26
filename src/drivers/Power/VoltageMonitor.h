@@ -19,7 +19,8 @@ struct VoltageData
     PowerSource source = PowerSource::UNKNOWN;
 
     bool valid = false;
-    bool noAcError = false;
+    bool noAcError = false;  // PSU voltage < system voltage
+    bool batteryOff = false; // Battery voltage < system voltage
 
     uint32_t lastUpdate = 0;
 };
