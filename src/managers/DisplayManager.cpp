@@ -46,7 +46,9 @@ void DisplayManager::Update(
     const SDStatus& sd,
     const SatelliteStatus& satellite,
     uint16_t reportingIntervalMinutes,
-    const VoltageData& voltage
+    const VoltageData& voltage,
+    bool panicActive,
+    bool tamperActive
 )
 {
     // Store latest data
@@ -55,6 +57,8 @@ void DisplayManager::Update(
     sd_        = sd;
     satellite_ = satellite;
     voltage_ = voltage;
+    panicActive_ = panicActive;
+    tamperActive_ = tamperActive;
 
     reportingIntervalMinutes_ = reportingIntervalMinutes;
 
@@ -216,7 +220,7 @@ void DisplayManager::HandleEvent(
 
         case DisplayScreen::SD_STATUS:
 
-        case DisplayScreen::SETTINGS:
+        case DisplayScreen::SYSTEM_STATUS:
 
         case DisplayScreen::VOLTAGE:
 
@@ -274,7 +278,7 @@ void DisplayManager::GotoPage()
             break;
 
         case 4:
-            currentScreen_ =  DisplayScreen::SETTINGS;
+            currentScreen_ =  DisplayScreen::SYSTEM_STATUS;
 
             break;
 
@@ -367,9 +371,9 @@ void DisplayManager::DrawScreen()
             DrawSDStatus();
             break;
 
-        case DisplayScreen::SETTINGS:
+        case DisplayScreen::SYSTEM_STATUS:
 
-            DrawSettings();
+            DrawSystemStatus();
             break;
 
         case DisplayScreen::VOLTAGE:
@@ -800,12 +804,12 @@ void DisplayManager::DrawSDStatus()
 
 
 // =====================================================
-// Settings
+// System Status
 // =====================================================
 
-void DisplayManager::DrawSettings()
+void DisplayManager::DrawSystemStatus()
 {
-    oled_.DrawText(0, 0, "SETTINGS");
+    oled_.DrawText(0, 0, "SYSTEM STATUS");
     oled_.DrawLine(0, 10, 127, 10);
 
     oled_.DrawText(0, 16, "TX INTERVAL");
@@ -829,7 +833,15 @@ void DisplayManager::DrawSettings()
     oled_.DrawText(0, 28, "LOG INTERVAL");
     oled_.DrawText(80, 28, "1 sec");
 
-    oled_.DrawText(0, 40, "BACK");
+    oled_.DrawText(0, 40, "PANIC:");
+    oled_.DrawText(60, 40,
+        panicActive_ ? "ACTIVE" : "CLEAR"
+    );
+
+    oled_.DrawText(0, 52, "TAMPER:");
+    oled_.DrawText(60, 52,
+        tamperActive_ ? "ACTIVE" : "CLEAR"
+    );
 }
 
 // =====================================================
@@ -876,6 +888,14 @@ void DisplayManager::DrawVoltage()
     );
     oled_.DrawText(30, 46, voltageText);
 
+    oled_.DrawText(0, 56, "BAT STATUS:");
+    oled_.DrawText(
+        72, 56,
+        !voltage_.valid
+            ? "---"
+            : (voltage_.batteryOff ? "ERROR" : "OK")
+    );
+
 
 }
 
@@ -888,9 +908,22 @@ void DisplayManager::DrawError()
     oled_.DrawText(0, 0, "ERROR");
     oled_.DrawLine(0, 10, 127, 10);
 
+    oled_.DrawText(0, 16, "PSU:");
+    oled_.DrawText(
+        60, 16,
+        !voltage_.valid
+            ? "---"
+            : (voltage_.noAcError ? "ERROR" : "OK")
+    );
 
+    oled_.DrawText(0, 28, "BATTERY:");
+    oled_.DrawText(
+        60, 28,
+        !voltage_.valid
+            ? "---"
+            : (voltage_.batteryOff ? "ERROR" : "OK")
+    );
 }
-
 
 // =====================================================
 // Get Screen

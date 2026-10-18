@@ -363,7 +363,9 @@ void App::Run()
         sdStatus_,
         satelliteStatus_,
         configuration_.GetReportingIntervalMinutes(),
-        voltageMonitor_.GetData()
+        voltageMonitor_.GetData(),
+        alarmManager_.EmergencyActive(),
+        alarmManager_.EnclosureOpen()
     );
 
 
@@ -443,7 +445,8 @@ if (telemetryIntervalMs == 0)
 {
     telemetryStarted_ = false;
 }
-else if (!satelliteManager_.IsBusy())
+else if (satelliteManager_.IsReady() && !satelliteManager_.IsBusy())
+//else if (!satelliteManager_.IsBusy())
 {
     const bool firstDue =
         !telemetryStarted_ &&

@@ -15,7 +15,7 @@ enum class DisplayScreen
     HEADING_STATUS,
     SATELLITE_STATUS,
     SD_STATUS,
-    SETTINGS,
+    SYSTEM_STATUS,
     VOLTAGE,
     ERROR
 };
@@ -50,7 +50,9 @@ public:
         const SDStatus& sd,
         const SatelliteStatus& satellite,
         uint16_t reportingIntervalMinutes,
-        const VoltageData& voltage
+        const VoltageData& voltage,
+        bool panicActive,
+        bool tamperActive
     );
 
 
@@ -87,6 +89,11 @@ private:
     SatelliteStatus satellite_;
     VoltageData voltage_;
 
+    bool panicActive_ = false;
+    bool tamperActive_ = false; 
+
+
+
     uint16_t reportingIntervalMinutes_ = 0;
     // ---------------------------------
     // OLED power management
@@ -98,6 +105,8 @@ private:
 
       // Current GPS position
    // PositionData position_;
+
+
 
     // ---------------------------------
     // Event handling
@@ -111,24 +120,16 @@ private:
 
     void DrawScreen();
     void DrawMainScreen();
-    void DrawMenu();
     void DrawGPSStatus();
     void DrawHeadingStatus();
     void DrawSatelliteStatus();
     void DrawSDStatus();
-    void DrawSettings();
+    void DrawSystemStatus();
     void DrawVoltage();
     void DrawError();
     
     
     void UpdateDisplay();
-
-    // ---------------------------------
-    // Menu navigation
-    // ---------------------------------
-
-    void NextMenuItem();
-    void PreviousMenuItem();
 
     // ---------------------------------
     // Page navigation

@@ -67,8 +67,14 @@ bool SatelliteManager::SendTelemetry(
     const TelemetryPacket& packet
 )
 {
-
     Serial.println("[SAT] SendTelemetry() entered");
+     if (!IsReady() || IsBusy())
+    {
+        Serial.println("[SAT] SendTelemetry() Return False");
+        return false;
+    }
+
+    //Serial.println("[SAT] SendTelemetry() entered");
 
    #if !DEBUG_SATELLITE_TX
         if (modem_.IsSending())
@@ -83,8 +89,16 @@ bool SatelliteManager::SendTelemetry(
     Serial.println("[SAT] RockBLOCK ready for new message");
 
     TelemetryPacket txPacket = packet;
+    txPacket.sequence = sequence_;
 
-    txPacket.sequence = sequence_++;
+    if (!SendPacket(txPacket))
+    {
+        return false;
+    }
+
+    // Advance only after the packet is accepted.
+    ++sequence_;
+
     Serial.print("[SAT] Sequence: ");
     Serial.println(txPacket.sequence);
 
