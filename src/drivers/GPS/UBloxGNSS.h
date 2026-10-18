@@ -28,5 +28,10 @@ private:
 
     static constexpr uint32_t BAUD_RATE = 9600;
 
+    static constexpr uint32_t INIT_RETRY_MS = 60UL * 1000UL;
+
+    bool uartStarted_ = false;
+    uint32_t lastValidSentence_ = 0;
+
 
 };

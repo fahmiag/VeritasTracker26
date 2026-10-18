@@ -20,30 +20,30 @@ SatelliteManager::SatelliteManager(
 
 bool SatelliteManager::Begin()
 {
-    if (!modem_.Begin())
-    {
-        Serial.println(
-            "[SAT] RockBLOCK initialization failed"
-        );
+    initialized_ = modem_.Begin();
 
-        initialized_ = false;
-
-        return false;
-    }
-
-    initialized_ = true;
+    // Measure the retry interval from completion of this attempt.
+    lastInitAttempt_ = millis();
 
     Serial.println(
-        "[SAT] Satellite manager ready"
+        initialized_
+            ? "[SAT] Satellite manager ready"
+            : "[SAT] Initialization failed; retry in 60 seconds"
     );
 
-    return true;
+    return initialized_;
 }
 
 void SatelliteManager::Update()
 {
     if (!initialized_)
     {
+        if (uint32_t(millis() - lastInitAttempt_) >= INIT_RETRY_MS)
+        {
+            Serial.println("[SAT] Retrying initialization");
+            Begin();
+        }
+
         return;
     }
 

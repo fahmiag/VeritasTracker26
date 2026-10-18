@@ -95,4 +95,7 @@ private:
         Protocol::AckError error
     );
 
+    static constexpr uint32_t INIT_RETRY_MS = 60UL * 1000UL;
+    uint32_t lastInitAttempt_ = 0;
+
 };

@@ -31,4 +31,9 @@ private:
 
     SCX20CAN& scx20_;
     UBloxGNSS& ublox_;
+
+    static constexpr uint32_t INIT_RETRY_MS = 60UL * 1000UL;
+
+    bool scx20Initialized_ = false;
+    uint32_t lastScx20InitAttempt_ = 0;
 };

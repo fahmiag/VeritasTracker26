@@ -62,22 +62,12 @@ bool SCX20CAN::Begin()
     // -------------------------------------------------
 
     
-    uint8_t attempts = 0;
-    while (CAN_OK != can_.begin(CAN_500KBPS) && attempts < 5)
+    if (can_.begin(CAN_500KBPS) != CAN_OK)
     {
-        Serial.print("[SCX20] CAN BUS init failed. Attempts: ");//remove this
-        Serial.println(attempts);
-
-        attempts++;
-        delay(100);
-
-    }
-
-    if (attempts >= 5)
-    {
-        Serial.println("[SCX20] CAN BUS init failed after retries");
+        Serial.println("[SCX20] CAN initialization failed");
         return false;
     }
+
 
     Serial.println(
         "[SCX20] CAN BUS initialized"

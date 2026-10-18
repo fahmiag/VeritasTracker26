@@ -27,6 +27,8 @@ RockBlockPlus9704::RockBlockPlus9704()
 bool RockBlockPlus9704::Begin()
 {
     Serial.println("RockBLOCK: starting...");
+    // Release the UART before configuring it again.
+    serial_.end();
 
     serial_.begin(
         BAUD_RATE,

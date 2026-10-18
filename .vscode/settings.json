@@ -8,6 +8,7 @@
         "hdop",
         "mikalhart",
         "MOSI",
+        "NMEA",
         "OLED",
         "ROCKBLOCK",
         "VSPI"

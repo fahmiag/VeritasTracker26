@@ -35,22 +35,24 @@ GPSManager::GPSManager(
 
 bool GPSManager::Begin()
 {
-    bool scx20Ok = scx20_.Begin();
-    bool ubloxOk = ublox_.Begin(); //never false
-
     Serial.println("[GPS] Starting GPS sources...");
 
-    Serial.print("[GPS] SCX-20: ");
+    scx20Initialized_ = scx20_.Begin();
+    lastScx20InitAttempt_ = millis();
+
+    const bool ubloxStarted = ublox_.Begin();
+
+    Serial.print("[GPS] SCX20 CAN: ");
     Serial.println(
-        scx20Ok ? "OK" : "FAILED"
+        scx20Initialized_
+            ? "OK"
+            : "FAILED; retry in 60 seconds"
     );
 
-    Serial.print("[GPS] u-blox: ");  
-    Serial.println(
-        ubloxOk ? "OK" : "FAILED"
-    );
+    Serial.print("[GPS] u-blox UART: ");
+    Serial.println(ubloxStarted ? "STARTED" : "FAILED");
 
-    return scx20Ok || ubloxOk;
+    return scx20Initialized_ || ubloxStarted;
 }
 
 
@@ -67,9 +69,32 @@ void GPSManager::Update()
     // This allows u-blox to remain ready as a fallback.
     // --------------------------------------------------------
 
+        // Keep processing u-blox even while CAN is unavailable.
+    ublox_.Update();
+
+    if (!scx20Initialized_)
+    {
+        if (uint32_t(millis() - lastScx20InitAttempt_) >=
+            INIT_RETRY_MS)
+        {
+            Serial.println("[GPS] Retrying SCX20 CAN initialization");
+
+            scx20Initialized_ = scx20_.Begin();
+            lastScx20InitAttempt_ = millis();
+
+            Serial.println(
+                scx20Initialized_
+                    ? "[GPS] SCX20 CAN initialized"
+                    : "[GPS] SCX20 CAN failed; retry in 60 seconds"
+            );
+        }
+
+        return;
+    }
+
     scx20_.Update();
 
-    ublox_.Update();
+
 }
 
 

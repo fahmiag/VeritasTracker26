@@ -11,12 +11,21 @@ UBloxGNSS::UBloxGNSS()
 
 bool UBloxGNSS::Begin()
 {
+    if (uartStarted_)
+    {
+        serial_.end();
+    }
+
     serial_.begin(
         BAUD_RATE,
         SERIAL_8N1,
         PinMap::UBLOX_RX,
         PinMap::UBLOX_TX
     );
+
+    uartStarted_ = true;
+    // Clear old parser and position data on every restart.
+    gps_ = TinyGPSPlus{};
 
     position_ = PositionData{}; //Create NEW instance of PositionData name position_, 
                                 // Value initialized object, set all to init value/state (default)
@@ -54,14 +63,31 @@ bool UBloxGNSS::Begin()
 
 void UBloxGNSS::Update()
 {
+if (!uartStarted_)
+{
+    return;
+}
+
     while (serial_.available())
     {
-        char c = serial_.read();
-       // Serial.print(c);
+        const char c = static_cast<char>(serial_.read());
 
-        gps_.encode(c);
+        // encode() returns true when a valid NMEA sentence completes.
+        if (gps_.encode(c))
+        {
+            lastValidSentence_ = millis();
+        }
     }
 
+    if (uint32_t(millis() - lastValidSentence_) >= INIT_RETRY_MS)
+    {
+        Serial.println(
+            "[UBLOX] No valid NMEA for 60 seconds; restarting UART"
+        );
+
+        Begin();
+        return;
+    }
 
     // ---------------------------------------------
     // Location
